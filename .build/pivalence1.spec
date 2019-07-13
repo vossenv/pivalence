@@ -2,9 +2,8 @@
 
 block_cipher = None
 
-
-a = Analysis(['../pivalence/pivalence.py'],
-             pathex=[],
+a = Analysis(['pivalence\\pivalence.py'],
+             pathex=['G:\\Repositories\\carag\\pivalence'],
              binaries=[( '../pivalence/resources/Qt5Core.dll', 'PyQt5/Qt/bin')],
              datas=[],
              hiddenimports=[],
@@ -19,22 +18,19 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
           [],
-          exclude_binaries=False,
-          name='piValence',
+          exclude_binaries=True,
+          name='pivalence',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False,
-          icon='.build/usticon.ico' )
-# coll = COLLECT(exe,
-#               a.binaries,
-#               a.zipfiles,
-#               a.datas,
-#               strip=False,
-#               upx=True,
-#               name='basic')
+          console=True )
+coll = COLLECT(exe,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=False,
+               upx=True,
+               upx_exclude=[],
+               name='pivalence')

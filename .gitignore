@@ -10,3 +10,5 @@ feed.txt
 auth\.txt
 *.exe
 build/
+
+dist/
