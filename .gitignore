@@ -1,0 +1,12 @@
+
+
+*.pyc
+*.idea/
+.idea/
+venv*
+
+*feed.txt
+feed.txt
+auth\.txt
+*.exe
+build/
