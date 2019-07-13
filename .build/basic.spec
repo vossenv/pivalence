@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['../basic/basic.py'],
+a = Analysis(['../pivalence/pivalence.py'],
              pathex=[],
              binaries=[( '../basic/Qt5Core.dll', 'PyQt5/Qt/bin')],
              datas=[],
@@ -24,7 +24,7 @@ exe = EXE(pyz,
           a.datas,
           [],
           exclude_binaries=False,
-          name='pifeeder',
+          name='piValence',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
