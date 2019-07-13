@@ -2,7 +2,7 @@
 
 block_cipher = None
 
-a = Analysis(['pivalence\\pivalence.py'],
+a = Analysis(['pivalence/pivalence.py'],
              pathex=[],
              binaries=[( 'pivalence/resources/Qt5Core.dll', 'PyQt5/Qt/bin')],
              datas=  [( 'pivalence/resources/*.jpg', 'resources' ),
