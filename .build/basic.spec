@@ -5,7 +5,7 @@ block_cipher = None
 
 a = Analysis(['../pivalence/pivalence.py'],
              pathex=[],
-             binaries=[( '../basic/Qt5Core.dll', 'PyQt5/Qt/bin')],
+             binaries=[( '../pivalence/Qt5Core.dll', 'PyQt5/Qt/bin')],
              datas=[],
              hiddenimports=[],
              hookspath=[],
