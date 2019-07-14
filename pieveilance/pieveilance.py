@@ -26,6 +26,7 @@ class PiWndow(QMainWindow):
         self.appTitle = "Pi Veilance"
         self.stylesheetPath = os.path.join(bundle_dir, "resources", "styles.qss")
         self.appIcon = os.path.join(bundle_dir, "resources", "bodomlogo-small.jpg")
+        self.labels = []
         self.initUI()
 
     def initUI(self):
@@ -38,10 +39,12 @@ class PiWndow(QMainWindow):
         positions = [(i, j) for i in range(3) for j in range(3)]
         for p in positions:
             label = QLabel()
+            label.setScaledContents(True)
             s = Thread(self)
             s.changeLabel.connect(label.setText)
             s.changePixmap.connect(label.setPixmap)
             self.grid.addWidget(label, *p)
+            self.labels.append(label)
             s.start()
 
     def initWindow(self):
@@ -69,6 +72,14 @@ class PiWndow(QMainWindow):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+
+    # def resizeEvent(self, event):
+    #     for l in self.labels:
+    #
+    #         pixmap = l.pixmap()
+    #         px = pixmap.scaled(self.width(), self.height())
+    #         self.label.setPixmap(self.pixmap)
+    #         self.label.resize(self.width(), self.height())
 
 
 class Thread(QThread):
