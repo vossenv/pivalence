@@ -1,4 +1,10 @@
-import sys, os
+import base64
+import os
+import random
+import sys
+import time
+
+from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
@@ -28,11 +34,14 @@ class PiWndow(QMainWindow):
     def setGridContent(self):
         positions = [(i, j) for i in range(3) for j in range(3)]
         for p in positions:
-            q = Snake()
-            self.grid.addWidget(q, *p)
+            label = QLabel()
+            s = Thread(self)
+            s.changeLabel.connect(label.setText)
+            self.grid.addWidget(label, *p)
+            s.start()
 
     def initWindow(self):
-        self.resize(640, 480)
+        self.resize(1024, 768)
         self.center()
         self.widget = QWidget()
         self.grid = QGridLayout()
@@ -58,11 +67,21 @@ class PiWndow(QMainWindow):
         self.move(qr.topLeft())
 
 
-class Snake(QLabel):
-    def __init__(self):
-        super().__init__()
-        self.setText("I am a snake!!")
-        self.setObjectName("snake")
+class Thread(QThread):
+    changePixmap = pyqtSignal(QPixmap)
+    changeLabel = pyqtSignal(str)
+
+
+    def run(self):
+        sleep = random.randint(1, 50) / 150
+        while True:
+            data = ""
+            for i in range(0,5):
+                r = str(random.randint(5e12,5e13))
+                r = base64.b64encode(r.encode('ascii'))
+                data += r.decode()+ "\n"
+            self.changeLabel.emit(data + "\nSleep = " + str(sleep))
+            time.sleep(sleep)
 
 
 
