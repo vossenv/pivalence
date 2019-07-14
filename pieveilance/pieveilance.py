@@ -3,6 +3,7 @@ import os
 import random
 import sys
 import time
+import requests
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -32,11 +33,12 @@ class PiWndow(QMainWindow):
         self.show()
 
     def setGridContent(self):
-        positions = [(i, j) for i in range(3) for j in range(3)]
+        positions = [(i, j) for i in range(10) for j in range(10)]
         for p in positions:
             label = QLabel()
             s = Thread(self)
             s.changeLabel.connect(label.setText)
+            s.changePixmap.connect(label.setPixmap)
             self.grid.addWidget(label, *p)
             s.start()
 
@@ -52,6 +54,8 @@ class PiWndow(QMainWindow):
         self.setWindowIcon(QIcon(self.appIcon))
         self.setCentralWidget(self.widget)
         self.statusBar().showMessage('Placeholder')
+
+
 
     def contextMenuEvent(self, event):
         cmenu = QMenu(self)
@@ -75,13 +79,19 @@ class Thread(QThread):
     def run(self):
         sleep = random.randint(1, 50) / 150
         while True:
-            data = ""
-            for i in range(0,5):
-                r = str(random.randint(5e12,5e13))
-                r = base64.b64encode(r.encode('ascii'))
-                data += r.decode()+ "\n"
-            self.changeLabel.emit(data + "\nSleep = " + str(sleep))
-            time.sleep(sleep)
+            img = requests.get("https://picsum.photos/500").content
+            qp = QPixmap()
+            qp.loadFromData(img)
+            self.changePixmap.emit(qp)
+
+
+            # data = ""
+            # for i in range(0,5):
+            #     r = str(random.randint(5e12,5e13))
+            #     r = base64.b64encode(r.encode('ascii'))
+            #     data += r.decode()+ "\n"
+            # self.changeLabel.emit(data + "\nSleep = " + str(sleep))
+            # time.sleep(sleep)
 
 
 
