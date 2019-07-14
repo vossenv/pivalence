@@ -1,15 +1,22 @@
 import sys
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-
+import os
 
 class PiWndow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.stylesheetPath = "resources/styles.qss"
-        self.appTitle = "Caragian Skies"
-        self.appIcon = "resources/bodomlogo-small.jpg"
+
+        if getattr(sys, 'frozen', False):
+            bundle_dir = sys._MEIPASS
+        else:
+            # we are running in a normal Python environment
+            bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+        self.appTitle = "Pi Valence"
+        self.stylesheetPath = os.path.join(bundle_dir,"resources", "styles.qss")
+        self.appIcon = os.path.join(bundle_dir,"resources", "bodomlogo-small.jpg")
         self.initUI()
 
     def initUI(self):

@@ -10,7 +10,7 @@ cleandir:
 	-$(RM) $(output_dir)
 
 standalone:
-	pyinstaller --clean --noconfirm pivalence.spec
+	pyinstaller --clean --noconfirm .build/pivalence.spec
 
 wheel:
 	make cleandir
