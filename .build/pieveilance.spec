@@ -3,12 +3,12 @@
 
 block_cipher = None
 
-a = Analysis(['../pivalence/pivalence.py'],
+a = Analysis(['../pieveilance/pieveilance.py'],
              pathex=[],
-             binaries=[( '../pivalence/resources/Qt5Core.dll', 'PyQt5/Qt/bin')],
-             datas=  [( '../pivalence/resources/*.jpg', 'resources' ),
-                      ( '../pivalence/resources/*.png', 'resources' ),
-                      ( '../pivalence/resources/*.qss', 'resources' )],
+             binaries=[( '../pieveilance/resources/Qt5Core.dll', 'PyQt5/Qt/bin')],
+             datas=  [( '../pieveilance/resources/*.jpg', 'resources' ),
+                      ( '../pieveilance/resources/*.png', 'resources' ),
+                      ( '../pieveilance/resources/*.qss', 'resources' )],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
