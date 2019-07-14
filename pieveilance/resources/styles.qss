@@ -8,6 +8,10 @@
     background-color: rgb(0, 0, 0);
 }
 
+.QPixmap {
+    width: 10%;
+}
+
 
 .QLabel {
     border: 1px solid #ffffff;
