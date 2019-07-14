@@ -33,6 +33,7 @@ exe = EXE(pyz,
           upx=True,
           console=True,
           icon='../.build/usticon.ico' )
+
 # coll = COLLECT(exe,
 #               a.binaries,
 #               a.zipfiles,
