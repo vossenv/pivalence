@@ -33,10 +33,10 @@ class PiWndow(QMainWindow):
 
     def initUI(self):
         self.initWindow()
-       # self.setGridContent()
+        #self.setGridContent()
         self.startDataGenerator()
         self.setStyleSheet(open(self.stylesheetPath, "r").read())
-      #  self.show()
+       # self.show()
 
     def setGridContent(self):
         positions = [(i, j) for i in range(1) for j in range(1)]
@@ -53,8 +53,6 @@ class PiWndow(QMainWindow):
     def startDataGenerator(self):
         generator = Generator(self)
         listener = ImageListener(self, generator.que)
-        #generator.refreshData.connect(listener.refreshData)
-
         generator.start()
         listener.start()
 
@@ -84,13 +82,54 @@ class PiWndow(QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    # def resizeEvent(self, event):
-    #     for l in self.labels:
-    #
-    #         pixmap = l.pixmap()
-    #         px = pixmap.scaled(self.width(), self.height())
-    #         self.label.setPixmap(self.pixmap)
-    #         self.label.resize(self.width(), self.height())
+
+class Camera(QLabel):
+    def __init__(self, parent=None, name="default"):
+        super(Camera, self).__init__(parent)
+
+
+
+
+class ImageListener(QThread):
+
+    camUpdate = pyqtSignal(object, object)
+
+    def __init__(self, parent=None, que=None):
+        super(ImageListener, self).__init__(parent)
+        self.que = que
+
+    def run(self):
+        self.sleep = 0.2
+        while True:
+            if self.que:
+                current = self.que.pop()
+                for i in current:
+                    img = self.getImage(i['image'])
+                    self.camUpdate.emit(i['source'], img)
+            time.sleep(self.sleep)
+
+    def getImage(self, data):
+        byte = data.encode('utf-8')
+        return  base64.decodebytes(byte)
+
+class Generator(QThread):
+
+    refreshData = pyqtSignal(object)
+
+    def __init__(self, parent=None):
+        super(Generator, self).__init__(parent)
+        self.que = deque([], maxlen=3)
+        self.sleep =  0.01
+
+    def update(self):
+        img = requests.get("http://192.168.50.139:9001/cameras/next")
+        data = json.loads(img.content)
+        self.que.append(data)
+
+    def run(self):
+        while True:
+            self.update()
+            time.sleep(self.sleep)
 
 
 class Thread(QThread):
@@ -100,7 +139,6 @@ class Thread(QThread):
 
     def __init__(self, parent = None, *args, **kwargs):
         super(Thread, self).__init__(parent)
-        print("a")
 
 
     # path = "E:\\Pics"
@@ -111,18 +149,18 @@ class Thread(QThread):
     #     return qp
 
     def update(self):
-        #img = requests.get("https://picsum.photos/500").content
+        img = requests.get("https://picsum.photos/500").content
 
         # img = requests.get("http://192.168.50.139:9001/cameras/front_bottom/next")
         # y =img.content
 
-        img = requests.get("http://192.168.50.139:9001/cameras/next")
-        x = json.loads(img.content)[1].get('image')
-        x1 = x.encode('utf-8')
-        y = base64.decodebytes(x1)
+        # img = requests.get("http://192.168.50.139:9001/cameras/next")
+        # x = json.loads(img.content)[1].get('image')
+        # x1 = x.encode('utf-8')
+        # y = base64.decodebytes(x1)
 
         qp = QPixmap()
-        qp.loadFromData(y)
+        qp.loadFromData(img)
         return qp
 
     def run(self):
@@ -131,57 +169,17 @@ class Thread(QThread):
             self.changePixmap.emit(self.update())
             time.sleep(self.sleep)
 
-# class ImageListener(QObject):
-#
-#     def __init__(self, parent=None, que=None):
-#         super(ImageListener, self).__init__(parent)
-#         self.que = que
-#
-#     @pyqtSlot(object, name="refresh")
-#     def refreshData(self):
-#         print (self.que.pop())
-#         time.sleep(0.5)
-
-class ImageListener(QThread):
-
-    def __init__(self, parent=None, que=None):
-        super(ImageListener, self).__init__(parent)
-        self.que = que
-
-    def run(self):
-        self.sleep = 0.2
-
-        while True:
-            try:
-                print(self.que.pop())
-            except:
-                pass
-            time.sleep(self.sleep)
-
-class Generator(QThread):
-
-    refreshData = pyqtSignal(object)
-
-    def __init__(self, parent = None, *args, **kwargs):
-        super(Generator, self).__init__(parent)
-        self.que = deque([], maxlen=3)
-        self.counter = 0
-
-    def update(self):
-        img = requests.get("http://192.168.50.139:9001/cameras/next")
-        #return json.loads(img.content)
-        self.counter += 1
-        self.que.append(self.counter)
-        return None
-
-    def run(self):
-        self.sleep =  0.025
-        while True:
-            self.update()
-            self.refreshData.emit(None)
-            time.sleep(self.sleep)
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = PiWndow()
     sys.exit(app.exec_())
+
+
+
+    # def resizeEvent(self, event):
+    #     for l in self.labels:
+    #
+    #         pixmap = l.pixmap()
+    #         px = pixmap.scaled(self.width(), self.height())
+    #         self.label.setPixmap(self.pixmap)
+    #         self.label.resize(self.width(), self.height())
