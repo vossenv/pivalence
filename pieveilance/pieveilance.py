@@ -6,6 +6,8 @@ import time
 import requests
 import json
 
+from collections import deque
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -50,7 +52,11 @@ class PiWndow(QMainWindow):
 
     def startDataGenerator(self):
         generator = Generator(self)
+        listener = ImageListener(self, generator.que)
+        #generator.refreshData.connect(listener.refreshData)
+
         generator.start()
+        listener.start()
 
     def initWindow(self):
         self.resize(1024, 768)
@@ -125,8 +131,32 @@ class Thread(QThread):
             self.changePixmap.emit(self.update())
             time.sleep(self.sleep)
 
+# class ImageListener(QObject):
+#
+#     def __init__(self, parent=None, que=None):
+#         super(ImageListener, self).__init__(parent)
+#         self.que = que
+#
+#     @pyqtSlot(object, name="refresh")
+#     def refreshData(self):
+#         print (self.que.pop())
+#         time.sleep(0.5)
 
+class ImageListener(QThread):
 
+    def __init__(self, parent=None, que=None):
+        super(ImageListener, self).__init__(parent)
+        self.que = que
+
+    def run(self):
+        self.sleep = 0.2
+
+        while True:
+            try:
+                print(self.que.pop())
+            except:
+                pass
+            time.sleep(self.sleep)
 
 class Generator(QThread):
 
@@ -134,17 +164,21 @@ class Generator(QThread):
 
     def __init__(self, parent = None, *args, **kwargs):
         super(Generator, self).__init__(parent)
-        print("Intialize")
+        self.que = deque([], maxlen=3)
+        self.counter = 0
 
     def update(self):
         img = requests.get("http://192.168.50.139:9001/cameras/next")
-        print("update")
-        return json.loads(img.content)
+        #return json.loads(img.content)
+        self.counter += 1
+        self.que.append(self.counter)
+        return None
 
     def run(self):
         self.sleep =  0.025
         while True:
-            self.refreshData.emit(self.update())
+            self.update()
+            self.refreshData.emit(None)
             time.sleep(self.sleep)
 
 if __name__ == '__main__':
