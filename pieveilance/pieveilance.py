@@ -4,6 +4,7 @@ import random
 import sys
 import time
 import requests
+import json
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -20,7 +21,6 @@ class PiWndow(QMainWindow):
         if getattr(sys, 'frozen', False):
             bundle_dir = sys._MEIPASS
         else:
-            # we are running in a normal Python environment
             bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
         self.appTitle = "Pi Veilance"
@@ -31,21 +31,26 @@ class PiWndow(QMainWindow):
 
     def initUI(self):
         self.initWindow()
-        self.setGridContent()
+       # self.setGridContent()
+        self.startDataGenerator()
         self.setStyleSheet(open(self.stylesheetPath, "r").read())
-        self.show()
+      #  self.show()
 
     def setGridContent(self):
-        positions = [(i, j) for i in range(3) for j in range(3)]
+        positions = [(i, j) for i in range(1) for j in range(1)]
         for p in positions:
             label = QLabel()
             label.setScaledContents(True)
-            s = Thread(self)
+            s = Thread(self,1,2,3,4)
             s.changeLabel.connect(label.setText)
             s.changePixmap.connect(label.setPixmap)
             self.grid.addWidget(label, *p)
             self.labels.append(label)
             s.start()
+
+    def startDataGenerator(self):
+        generator = Generator(self)
+        generator.start()
 
     def initWindow(self):
         self.resize(1024, 768)
@@ -83,28 +88,64 @@ class PiWndow(QMainWindow):
 
 
 class Thread(QThread):
+
     changePixmap = pyqtSignal(QPixmap)
     changeLabel = pyqtSignal(str)
 
-    path = "E:\\Pics"
-    plist = [f for f in Path(path).glob('**/*.jpg')]
+    def __init__(self, parent = None, *args, **kwargs):
+        super(Thread, self).__init__(parent)
+        print("a")
 
-    def update(self):
-        qp = QPixmap(str(random.choice(self.plist))).scaled(500, 500)
-        return qp
 
+    # path = "E:\\Pics"
+    # plist = [f for f in Path(path).glob('**/*.jpg')]
+    #
     # def update(self):
-    #     img = requests.get("https://picsum.photos/500").content
-    #     qp = QPixmap()
-    #     qp.loadFromData(img)
+    #     qp = QPixmap(str(random.choice(self.plist))).scaled(200, 200)
     #     return qp
 
+    def update(self):
+        #img = requests.get("https://picsum.photos/500").content
+
+        # img = requests.get("http://192.168.50.139:9001/cameras/front_bottom/next")
+        # y =img.content
+
+        img = requests.get("http://192.168.50.139:9001/cameras/next")
+        x = json.loads(img.content)[1].get('image')
+        x1 = x.encode('utf-8')
+        y = base64.decodebytes(x1)
+
+        qp = QPixmap()
+        qp.loadFromData(y)
+        return qp
+
     def run(self):
-        self.sleep = random.randint(10, 50)*.07
+        self.sleep =  0.025 #random.randint(10, 50)*.07
         while True:
             self.changePixmap.emit(self.update())
             time.sleep(self.sleep)
 
+
+
+
+class Generator(QThread):
+
+    refreshData = pyqtSignal(object)
+
+    def __init__(self, parent = None, *args, **kwargs):
+        super(Generator, self).__init__(parent)
+        print("Intialize")
+
+    def update(self):
+        img = requests.get("http://192.168.50.139:9001/cameras/next")
+        print("update")
+        return json.loads(img.content)
+
+    def run(self):
+        self.sleep =  0.025
+        while True:
+            self.refreshData.emit(self.update())
+            time.sleep(self.sleep)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
