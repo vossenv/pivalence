@@ -18,6 +18,8 @@ from pathlib import Path
 
 class PiWndow(QMainWindow):
 
+    resized = pyqtSignal(object)
+
     def __init__(self):
         super().__init__()
 
@@ -30,6 +32,8 @@ class PiWndow(QMainWindow):
         self.stylesheetPath = os.path.join(bundle_dir, "resources", "styles.qss")
         self.appIcon = os.path.join(bundle_dir, "resources", "bodomlogo-small.jpg")
         self.labels = []
+        self.camCount = None
+
         self.initUI()
 
     def initUI(self):
@@ -40,6 +44,15 @@ class PiWndow(QMainWindow):
 
     # self.setGridContent()
 
+    def resizeEvent(self, event):
+
+        if self.camCount:
+            area = self.widget.frameGeometry().width() * self.widget.frameGeometry().height()/self.camCount
+            area = math.sqrt(area)
+            self.resized.emit(area)
+
+        return super(PiWndow, self).resizeEvent(event)
+
     def beginDataFlows(self):
         self.generator = Generator(self)
         self.setCameraGrid(self.generator.getCameraList())
@@ -47,7 +60,7 @@ class PiWndow(QMainWindow):
         self.generator.start()
 
     def initWindow(self):
-        #self.resize(1024, 768)
+        # self.resize(1024, 768)
         self.center()
         self.widget = QWidget()
         self.grid = QGridLayout()
@@ -75,6 +88,7 @@ class PiWndow(QMainWindow):
     @pyqtSlot(list, name="camgrid")
     def setCameraGrid(self, camlist=None):
 
+        self.camCount = len(camlist)
         cols = 2
         rows = math.ceil(len(camlist) / cols)
         positions = [(i, j) for i in range(rows) for j in range(cols)]
@@ -83,6 +97,7 @@ class PiWndow(QMainWindow):
             cam = Camera(name=c)
             cam.setScaledContents(True)
             self.generator.updateCameras.connect(cam.setImage)
+            self.resized.connect(cam.setFrameSize)
             self.grid.addWidget(cam, *positions[i])
             self.labels.append(cam)
 
@@ -91,25 +106,31 @@ class Camera(QLabel):
     def __init__(self, parent=None, name="default"):
         super(Camera, self).__init__(parent)
         self.name = name
-        self.size = 800
+        self.size = 300
+
+    @pyqtSlot(object, name="size")
+    def setFrameSize(self, size):
+        self.size = size
+        print()
 
     @pyqtSlot(object, name="camgrid")
     def setImage(self, camData):
         if self.name in camData:
             img = self.getImage(camData[self.name]['image'])
 
-            qi = QImage()
-            qi.loadFromData(img)
-            z = qi.size()
-            g = QRect(QPoint(0,0),z)
-            g2 = QRect(g.center(), QSize(200, 200))
-            copy = qi.copy(g2)
-
-            qp = QPixmap(copy)
-           # qp.loadFromData(img)
-           # qp = qp.scaled(self.size, self.size)
-           # qp = qp.scaledToHeight(self.size)
+            # qi = QImage()
+            # qi.loadFromData(img)
+            # z = qi.size()
+            # g = QRect(QPoint(0,0),z)
+            # g2 = QRect(g.center(), QSize(200, 200))
+            # copy = qi.copy(g2)
+            #
+            qp = QPixmap()
+            qp.loadFromData(img)
+            qp = qp.scaled(self.size, self.size)
+            qp = qp.scaledToHeight(self.size)
             self.setPixmap(qp)
+
 
     def getImage(self, data):
         byte = data.encode('utf-8')
@@ -131,15 +152,13 @@ class Generator(QThread):
     def update(self):
         img = requests.get("http://192.168.50.139:9001/cameras/next")
         data = json.loads(img.content)
-        camData = {v['source']:v for v in data}
+        camData = {v['source']: v for v in data}
         self.updateCameras.emit(camData)
 
     def run(self):
         while True:
             self.update()
             time.sleep(self.sleep)
-
-
 
 
 class Thread(QThread):
