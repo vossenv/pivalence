@@ -33,6 +33,7 @@ class PiWndow(QMainWindow):
         self.labels = []
         self.camlist = None
         self.camCount = None
+        self.cols = 3
 
         self.initUI()
 
@@ -55,15 +56,36 @@ class PiWndow(QMainWindow):
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
 
-        side_length = math.sqrt(width*height/Ncam)
+        Ncols = Ncam
+
+        while True:
+
+            rows = math.ceil(Ncam / Ncols)
+            side_length = width/Ncols
+            remainder = height - side_length*rows
+
+            if remainder > side_length:
+                Ncols = Ncols - 1
+            else:
+                break
+
+        print(str(Ncols) + " x " + str(rows))
+
+        if Ncols != self.cols:
+            self.setCameraGrid()
+
+        self.cols = Ncols
+
+
+
 
         # Atrue = width*height - (math.pow(side_length,2))*2
         #
         # side_length = math.sqrt(Atrue / Ncam)
 
-        Ncols = math.floor(width/side_length)
-        Nrows = math.ceil(Ncam / Ncols)
-        print(str(Ncols) + " x " + str(Nrows) + " " + str(round(width - side_length * Ncols)) + " "+ str(round(height - side_length * Nrows)))
+        # Ncols = math.floor(width/side_length)
+        # Nrows = math.ceil(Ncam / Ncols)
+        # print(str(Ncols) + " x " + str(Nrows) + " " + str(round(width - side_length * Ncols)) + " "+ str(round(height - side_length * Nrows)))
 
     def resizeEvent(self, event):
 
@@ -119,7 +141,7 @@ class PiWndow(QMainWindow):
             self.grid.removeWidget(l)
             self.labels.remove(l)
 
-        cols = 3
+        cols = self.cols
         rows = math.ceil(len(camlist) / cols)
         positions = [(i, j) for i in range(rows) for j in range(cols)]
 
