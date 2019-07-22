@@ -175,7 +175,7 @@ class PiWndow(QMainWindow):
 
            # s = QSizePolicy()
 
-           # cam.setSizePolicy(QSizePolicy.ShrinkFlag, QSizePolicy.Expanding)
+            cam.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             cam.setMinimumSize(QSize(50, 50))
             self.setCamSize.connect(cam.setFrameSize)
 
