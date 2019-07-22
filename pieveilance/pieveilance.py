@@ -18,6 +18,7 @@ from pathlib import Path
 
 class PiWndow(QMainWindow):
     resized = pyqtSignal(object)
+    setCamSize = pyqtSignal(object)
 
     def __init__(self):
         super().__init__()
@@ -31,8 +32,8 @@ class PiWndow(QMainWindow):
         self.stylesheetPath = os.path.join(bundle_dir, "resources", "styles.qss")
         self.appIcon = os.path.join(bundle_dir, "resources", "bodomlogo-small.jpg")
         self.labels = []
-        self.camlist = None
-        self.camCount = None
+        self.camlist = []
+        self.camCount = 0
         self.cols = 3
 
         self.initUI()
@@ -49,12 +50,18 @@ class PiWndow(QMainWindow):
 
     def computeGrid(self):
 
+
+
         if not self.camCount:
             return
+
+
 
         Ncam = self.camCount
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
+
+        self.setCamSize.emit(50)
 
         Ncols = Ncam
 
@@ -69,13 +76,21 @@ class PiWndow(QMainWindow):
             else:
                 break
 
-        print(str(Ncols) + " x " + str(rows))
+       # print(str(Ncols) + " x " + str(rows))
 
-        if Ncols != self.cols:
-            self.setCameraGrid()
-
+        current_cols = self.cols
         self.cols = Ncols
+        self.sl = side_length #- 50
 
+
+        newl = self.sl
+
+        #if newl < width/Ncols:
+        self.setCamSize.emit(self.sl - 50)
+
+        if self.cols != current_cols:
+           # print("Resize")
+            self.setCameraGrid()
 
 
 
@@ -95,7 +110,7 @@ class PiWndow(QMainWindow):
         #     self.setCameraGrid(self.camlist)
         # area = self.widget.frameGeometry().width() * self.widget.frameGeometry().height()/self.camCount
         # area = math.sqrt(area)
-        # self.resized.emit(area)
+
 
         return super(PiWndow, self).resizeEvent(event)
 
@@ -132,14 +147,22 @@ class PiWndow(QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+    def mouseReleaseEvent(self, QMouseEvent):
+        cursor = QCursor()
+        print(cursor.pos())
+
     @pyqtSlot(object, name="camgrid")
     def setCameraGrid(self, camlist=None):
+        camlist = camlist if camlist else self.camlist
         self.camlist = camlist
         self.camCount = len(camlist)
 
-        for l in self.labels:
-            self.grid.removeWidget(l)
-            self.labels.remove(l)
+        # for l in self.labels:
+        #     self.grid.removeWidget(l)
+        #     self.labels.remove(l)
+
+        for i in reversed(range(self.grid.count())):
+            self.grid.itemAt(i).widget().close()
 
         cols = self.cols
         rows = math.ceil(len(camlist) / cols)
@@ -147,12 +170,12 @@ class PiWndow(QMainWindow):
 
         for i, c in enumerate(camlist):
             cam = DummyCamera(name=c)
-            # cam.setScaledContents(True)
+            #am.setScaledContents(True)
             # self.generator.updateCameras.connect(cam.setImage)
-            self.resized.connect(cam.setFrameSize)
+            self.setCamSize.connect(cam.setFrameSize)
 
             self.grid.addWidget(cam, *positions[i])
-            self.labels.append(cam)
+          #  self.labels.append(cam)
 
 
 class DummyCamera(QLabel):
@@ -164,11 +187,13 @@ class DummyCamera(QLabel):
 
     @pyqtSlot(object, name="size")
     def setFrameSize(self, size):
-        # self.setPixmap(self.px.scaled(size,size, Qt.KeepAspectRatio))
-        print()
+        pass
+        #self.setPixmap(self.px.scaled(size, size))
+        self.setPixmap(self.px.scaled(size,size)) #, Qt.KeepAspectRatio))
+       # print(size)
 
     def setImage(self):
-        # r = requests.get("https://picsum.photos/200").content
+        # r = requests.get("https://picsum.photos/500").content
         # qp = QPixmap()
         # qp.loadFromData(r)
 
