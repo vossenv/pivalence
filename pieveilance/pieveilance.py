@@ -61,7 +61,7 @@ class PiWndow(QMainWindow):
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
 
-        self.setCamSize.emit(50)
+    #    self.setCamSize.emit(50)
 
         Ncols = Ncam
 
@@ -86,7 +86,7 @@ class PiWndow(QMainWindow):
         newl = self.sl
 
         #if newl < width/Ncols:
-        self.setCamSize.emit(self.sl - 50)
+        self.setCamSize.emit(self.sl-2)
 
         if self.cols != current_cols:
            # print("Resize")
@@ -172,6 +172,11 @@ class PiWndow(QMainWindow):
             cam = DummyCamera(name=c)
             #am.setScaledContents(True)
             # self.generator.updateCameras.connect(cam.setImage)
+
+           # s = QSizePolicy()
+
+           # cam.setSizePolicy(QSizePolicy.ShrinkFlag, QSizePolicy.Expanding)
+            cam.setMinimumSize(QSize(50, 50))
             self.setCamSize.connect(cam.setFrameSize)
 
             self.grid.addWidget(cam, *positions[i])
