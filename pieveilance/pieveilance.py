@@ -89,7 +89,7 @@ class PiWndow(QMainWindow):
         self.setCamSize.emit(self.sl-2)
 
         if self.cols != current_cols:
-           # print("Resize")
+            print("Resize")
             self.setCameraGrid()
 
 
@@ -151,18 +151,25 @@ class PiWndow(QMainWindow):
         cursor = QCursor()
         print(cursor.pos())
 
+    def clearLayout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
     @pyqtSlot(object, name="camgrid")
     def setCameraGrid(self, camlist=None):
         camlist = camlist if camlist else self.camlist
         self.camlist = camlist
         self.camCount = len(camlist)
 
-        # for l in self.labels:
-        #     self.grid.removeWidget(l)
-        #     self.labels.remove(l)
 
-        for i in reversed(range(self.grid.count())):
-            self.grid.itemAt(i).widget().close()
+        self.clearLayout(self.grid)
+        # for i in reversed(range(self.grid.count())):
+
+        #     self.grid.itemAt(i).widget().deleteLater()
+            #self.grid.itemAt(i).widget().setParent(None)
+
 
         cols = self.cols
         rows = math.ceil(len(camlist) / cols)
