@@ -164,10 +164,9 @@ class PiWndow(QMainWindow):
         self.camCount = len(camlist)
 
 
-        self.clearLayout(self.grid)
-        # for i in reversed(range(self.grid.count())):
-
-        #     self.grid.itemAt(i).widget().deleteLater()
+       # self.clearLayout(self.grid)
+        for i in reversed(range(self.grid.count())):
+            self.grid.takeAt(i).widget().deleteLater()
             #self.grid.itemAt(i).widget().setParent(None)
 
 
