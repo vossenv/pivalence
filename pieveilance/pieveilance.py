@@ -35,8 +35,8 @@ class PiWndow(QMainWindow):
         self.camlist = []
         self.camCount = 0
         self.cols = 3
-        self.h_margin = 50
-        self.v_margin = 50
+        self.h_margin = 30
+        self.v_margin = 30
 
         self.initUI()
 
@@ -48,71 +48,50 @@ class PiWndow(QMainWindow):
         self.resized.connect(self.setCameraGrid)
         self.computeGrid()
 
-    # self.setGridContent()
-
     def computeGrid(self):
-
-
 
         if not self.camCount:
             return
 
-
-
         Ncam = self.camCount
-        width = self.widget.frameGeometry().width()
-        height = self.widget.frameGeometry().height()
+        width = self.widget.frameGeometry().width() - self.h_margin*2
+        height = self.widget.frameGeometry().height() - self.v_margin*2
 
-        Ncols = Ncam
+        cols = Ncam
 
         while True:
 
-            rows = math.ceil(Ncam / Ncols)
-            side_length = width/Ncols
-            remainder = height - side_length*rows
+            rows = math.ceil(Ncam / cols)
+            side_length = width / cols
+            remainder = height - side_length * rows
 
             if remainder > side_length:
-                Ncols = Ncols - 1
+                cols = cols - 1
+                if cols == 0:
+                    cols = 1
+                    break
             else:
                 break
 
-
         current_cols = self.cols
-        self.cols = Ncols
-        self.sl = side_length #- 50
+        self.cols = cols
+        self.sl = side_length
 
-        t = height - self.sl*rows
-
+        t = height - self.sl * rows - 2 * self.h_margin
+        n = rows
         if t < 0:
-            self.sl = self.sl - abs(t/rows)
+            self.sl = self.sl - abs(t / n)
 
+        rheight = max(height - self.sl * rows, 0) / 2 + self.v_margin
+        vheight = max(width - self.sl * cols, 0) / 2 + self.h_margin
 
         self.setCamSize.emit(self.sl)
-
-        rheight = max(height - self.sl*rows,0)/2 + self.h_margin
-        vheight = max(width - self.sl*Ncols,0)/2 + self.v_margin
-
-
-
         # left, top, right, bottom
 
-        print(rheight)
-
-        self.grid.setContentsMargins(vheight, rheight, vheight, rheight)
-
         if self.cols != current_cols:
-            print("Resize")
             self.setCameraGrid()
 
-
-
-        # Atrue = width*height - (math.pow(side_length,2))*2
-        #
-        # side_length = math.sqrt(Atrue / Ncam)
-
-        # Ncols = math.floor(width/side_length)
-        # Nrows = math.ceil(Ncam / Ncols)
-        # print(str(Ncols) + " x " + str(Nrows) + " " + str(round(width - side_length * Ncols)) + " "+ str(round(height - side_length * Nrows)))
+        self.grid.setContentsMargins(vheight, rheight, vheight, rheight)
 
     def resizeEvent(self, event):
 
@@ -122,7 +101,6 @@ class PiWndow(QMainWindow):
         #     self.setCameraGrid(self.camlist)
         # area = self.widget.frameGeometry().width() * self.widget.frameGeometry().height()/self.camCount
         # area = math.sqrt(area)
-
 
         return super(PiWndow, self).resizeEvent(event)
 
@@ -175,13 +153,10 @@ class PiWndow(QMainWindow):
         self.camlist = camlist
         self.camCount = len(camlist)
 
-
-
-       # self.clearLayout(self.grid)
+        # self.clearLayout(self.grid)
         for i in reversed(range(self.grid.count())):
             self.grid.takeAt(i).widget().deleteLater()
-            #self.grid.itemAt(i).widget().setParent(None)
-
+            # self.grid.itemAt(i).widget().setParent(None)
 
         cols = self.cols
         rows = math.ceil(len(camlist) / cols)
@@ -192,44 +167,22 @@ class PiWndow(QMainWindow):
         # self.grid.addWidget(Spacer(), rows+1,0,1,cols+2)
         # self.grid.addWidget(Spacer(), 0,0,1,cols+2)
 
-
         positions = [(i, j) for i in range(rows) for j in range(cols)]
 
         for i, c in enumerate(camlist):
             cam = DummyCamera(name=c)
-            #cam.setScaledContents(True)
+            # cam.setScaledContents(True)
             # self.generator.updateCameras.connect(cam.setImage)
 
-           # s = QSizePolicy()
+            # s = QSizePolicy()
 
             cam.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            cam.setMinimumSize(QSize(50, 50))
+            cam.setMinimumSize(QSize(5, 5))
             self.setCamSize.connect(cam.setFrameSize)
 
             self.grid.addWidget(cam, *positions[i])
 
         self.computeGrid()
-
-
-
-          #  self.labels.append(cam)
-
-class Spacer(QLabel):
-    def __init__(self, parent=None, name="default"):
-        super(Spacer, self).__init__(parent)
-        self.name = name
-        self.setText("AAAAAAAA")
-        self.setMinimumSize(QSize(0, 0))
-
-        # qp = QPixmap("resources/ent.jpg")
-        # self.px = qp
-        # qp = qp.scaled(300, 300, Qt.KeepAspectRatio)
-        #
-        # # qp = qp.scaledToHeight(200)
-        # self.setPixmap(qp)
-        #self.setGeometry(100, 100, 300, 200)
-
-
 
 
 class DummyCamera(QLabel):
@@ -242,10 +195,11 @@ class DummyCamera(QLabel):
     @pyqtSlot(object, name="size")
     def setFrameSize(self, size):
         pass
-        #self.setPixmap(self.px.scaled(size, size))
+        # self.setPixmap(self.px.scaled(size, size))
 
-        self.setPixmap(self.px.scaled(size,size)) #, Qt.KeepAspectRatio))
-       # print(size)
+        self.setPixmap(self.px.scaled(size, size))  # , Qt.KeepAspectRatio))
+
+    # print(size)
 
     def setImage(self):
         # r = requests.get("https://picsum.photos/500").content
