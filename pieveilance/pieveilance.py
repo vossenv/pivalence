@@ -35,6 +35,8 @@ class PiWndow(QMainWindow):
         self.camlist = []
         self.camCount = 0
         self.cols = 3
+        self.h_margin = 50
+        self.v_margin = 50
 
         self.initUI()
 
@@ -86,6 +88,17 @@ class PiWndow(QMainWindow):
 
 
         self.setCamSize.emit(self.sl)
+
+        rheight = max(height - self.sl*rows,0)/2 + self.h_margin
+        vheight = max(width - self.sl*Ncols,0)/2 + self.v_margin
+
+
+
+        # left, top, right, bottom
+
+        print(rheight)
+
+        self.grid.setContentsMargins(vheight, rheight, vheight, rheight)
 
         if self.cols != current_cols:
             print("Resize")
@@ -163,6 +176,7 @@ class PiWndow(QMainWindow):
         self.camCount = len(camlist)
 
 
+
        # self.clearLayout(self.grid)
         for i in reversed(range(self.grid.count())):
             self.grid.takeAt(i).widget().deleteLater()
@@ -172,12 +186,14 @@ class PiWndow(QMainWindow):
         cols = self.cols
         rows = math.ceil(len(camlist) / cols)
 
+        # self.grid.addWidget(Spacer(), 0, 0, rows, 1)
+        # self.grid.addWidget(Spacer(), 0, cols+1, rows, 1)
+        #
+        # self.grid.addWidget(Spacer(), rows+1,0,1,cols+2)
+        # self.grid.addWidget(Spacer(), 0,0,1,cols+2)
 
 
-        self.grid.addWidget(Spacer(), rows+1,0,1,cols)
-        self.grid.addWidget(Spacer(), 0,0,1,cols)
-
-        positions = [(i, j) for i in range(1,rows+1) for j in range(cols)]
+        positions = [(i, j) for i in range(rows) for j in range(cols)]
 
         for i, c in enumerate(camlist):
             cam = DummyCamera(name=c)
