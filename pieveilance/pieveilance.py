@@ -61,8 +61,6 @@ class PiWndow(QMainWindow):
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
 
-    #    self.setCamSize.emit(50)
-
         Ncols = Ncam
 
         while True:
@@ -76,17 +74,18 @@ class PiWndow(QMainWindow):
             else:
                 break
 
-       # print(str(Ncols) + " x " + str(rows))
 
         current_cols = self.cols
         self.cols = Ncols
         self.sl = side_length #- 50
 
+        t = height - self.sl*rows
 
-        newl = self.sl
+        if t < 0:
+            self.sl = self.sl - abs(t/rows)
 
-        #if newl < width/Ncols:
-        self.setCamSize.emit(self.sl-2)
+
+        self.setCamSize.emit(self.sl)
 
         if self.cols != current_cols:
             print("Resize")
@@ -172,11 +171,17 @@ class PiWndow(QMainWindow):
 
         cols = self.cols
         rows = math.ceil(len(camlist) / cols)
-        positions = [(i, j) for i in range(rows) for j in range(cols)]
+
+
+
+        self.grid.addWidget(Spacer(), rows+1,0,1,cols)
+        self.grid.addWidget(Spacer(), 0,0,1,cols)
+
+        positions = [(i, j) for i in range(1,rows+1) for j in range(cols)]
 
         for i, c in enumerate(camlist):
             cam = DummyCamera(name=c)
-            #am.setScaledContents(True)
+            #cam.setScaledContents(True)
             # self.generator.updateCameras.connect(cam.setImage)
 
            # s = QSizePolicy()
@@ -186,7 +191,29 @@ class PiWndow(QMainWindow):
             self.setCamSize.connect(cam.setFrameSize)
 
             self.grid.addWidget(cam, *positions[i])
+
+        self.computeGrid()
+
+
+
           #  self.labels.append(cam)
+
+class Spacer(QLabel):
+    def __init__(self, parent=None, name="default"):
+        super(Spacer, self).__init__(parent)
+        self.name = name
+        self.setText("AAAAAAAA")
+        self.setMinimumSize(QSize(0, 0))
+
+        # qp = QPixmap("resources/ent.jpg")
+        # self.px = qp
+        # qp = qp.scaled(300, 300, Qt.KeepAspectRatio)
+        #
+        # # qp = qp.scaledToHeight(200)
+        # self.setPixmap(qp)
+        #self.setGeometry(100, 100, 300, 200)
+
+
 
 
 class DummyCamera(QLabel):
@@ -200,6 +227,7 @@ class DummyCamera(QLabel):
     def setFrameSize(self, size):
         pass
         #self.setPixmap(self.px.scaled(size, size))
+
         self.setPixmap(self.px.scaled(size,size)) #, Qt.KeepAspectRatio))
        # print(size)
 
