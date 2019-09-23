@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import screeninfo
 import datetime
-from pifeed_original import datasource as ds
+from examples.pifeed_original import datasource as ds
 
 import json
 import requests
