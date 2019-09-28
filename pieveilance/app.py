@@ -6,13 +6,16 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import pieveilance.resources as resources
-from pieveilance.generator import *
+from pieveilance.camera import *
+from pieveilance.dummy import *
 
 
 class PiWndow(QMainWindow):
     setCamSize = pyqtSignal(object)
+    resized = pyqtSignal()
 
     def __init__(self):
+
         # noinspection PyArgumentList
         super().__init__()
 
@@ -26,6 +29,9 @@ class PiWndow(QMainWindow):
 
         self.global_cam = DummyCamera
         self.global_gen = DummyGenerator
+
+        self.global_cam = Camera
+        self.global_gen = PiCamGenerator
 
         self.initWindow(stylesheet, title, icon)
         self.beginDataFlows()
@@ -48,6 +54,7 @@ class PiWndow(QMainWindow):
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
+        self.resized.connect(self.setCameraGrid)
 
     def resizeEvent(self, event):
         """
@@ -55,8 +62,7 @@ class PiWndow(QMainWindow):
         :param event:
         :return:
         """
-
-        self.setCameraGrid()
+        self.resized.emit()
         return super(PiWndow, self).resizeEvent(event)
 
     def contextMenuEvent(self, event):
@@ -73,12 +79,10 @@ class PiWndow(QMainWindow):
             qApp.quit()
 
     def beginDataFlows(self):
-        # current number of cameras
         self.camlist = []
         self.cols = 3
-
         self.generator = self.global_gen(self)
-        self.generator.updateCameras.connect(self.setCameraGrid)
+        self.generator.updateList.connect(self.setCameraGrid)
         self.generator.start()
 
     @pyqtSlot(object, name="camgrid")
@@ -92,27 +96,27 @@ class PiWndow(QMainWindow):
 
         # see if there are new column count as calculated by compute
         new_cols, dimensions, camSize = self.computeGrid(len(self.camlist))
+        self.grid.setContentsMargins(*dimensions)
 
         # Cameras must be repositioned
-        if new_cols and new_cols != self.cols:
-            self.cols = new_cols
+        if new_cols == self.cols:
+            self.setCamSize.emit(camSize)
 
+        else:
             # clear the layout
             for i in reversed(range(self.grid.count())):
                 self.grid.takeAt(i).widget().deleteLater()
 
             # calculate new rows and positions
+            self.cols = new_cols
             rows = math.ceil(len(self.camlist) / new_cols)
             positions = [(i, j) for i in range(rows) for j in range(new_cols)]
 
             # add the cameras
             for i, c in enumerate(self.camlist):
-                cam = self.global_cam(name=c)
+                cam = self.global_cam(self.generator, camSize, c)
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
-
-        self.grid.setContentsMargins(*dimensions)
-        self.setCamSize.emit(camSize)
 
     def computeGrid(self, camCount):
 
@@ -126,10 +130,10 @@ class PiWndow(QMainWindow):
 
         cols, rows, sideLength = self.calculate_cols(camCount, width, height)
 
-        t = height - sideLength * rows - 2 * h_margin
-        n = rows
-        if t < 0:
-            sideLength = sideLength - abs(t / n)
+        remainder_height = height - sideLength * rows - 2 * h_margin
+
+        if remainder_height < 0:
+            sideLength = sideLength - abs(remainder_height / rows)
 
         rheight = max(height - sideLength * rows, 0) / 2 + v_margin
         vheight = max(width - sideLength * cols, 0) / 2 + h_margin
@@ -145,14 +149,11 @@ class PiWndow(QMainWindow):
         # Start by initial guess that ncols = ncams
         cols = rows = sideLength = camCount
         while (cols > 0):
-
             rows = math.ceil(camCount / cols)
             sideLength = width / cols
-
             if (height - sideLength * rows) < sideLength:
                 break
             cols -= 1
-
         cols = 1 if cols < 1 else cols
         return cols, rows, sideLength
 

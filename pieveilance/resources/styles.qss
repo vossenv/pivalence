@@ -13,7 +13,7 @@
 }
 
 
-.DummyCamera {
+.DummyCamera, .Camera {
     border: 1px solid #ffffff;
     border-radius: 0px;
     font-weight: bold;
