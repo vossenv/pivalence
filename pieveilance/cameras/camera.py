@@ -12,16 +12,18 @@ class PiCamGenerator(QThread):
     updateList = pyqtSignal(object)
     updateCameras = pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, config, parent=None):
         super(PiCamGenerator, self).__init__(parent)
-        self.sleep = .1
+        self.list_url = config.get('list_url')
+        self.data_url = config.get('data_url')
+        self.sleep = config.get_float('update_interval', 0.1)
 
     def getCameraList(self):
-        cams = requests.get("http://192.168.50.139:9001/camlist").content
+        cams = requests.get(self.list_url).content
         return json.loads(cams)
 
     def update(self):
-        img = requests.get("http://192.168.50.139:9001/cameras/next")
+        img = requests.get(self.data_url)
         data = json.loads(img.content)
         camData = {v['source']: v for v in data}
         self.updateCameras.emit(camData)

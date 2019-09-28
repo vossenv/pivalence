@@ -5,10 +5,11 @@ import math
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from pieveilance.camera import *
+from pieveilance import util
+from pieveilance.cameras.camera import *
+from pieveilance.cameras.dummy import *
 from pieveilance.config import *
-from pieveilance.dummy import *
-from pieveilance.resources import *
+from pieveilance.resources import get_resource
 
 
 class PiWndow(QMainWindow):
@@ -18,17 +19,13 @@ class PiWndow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        cfg_file = "config.ini"
-        resource_folder = resource_dir
-        if getattr(sys, 'frozen', False):
-            resource_folder = sys._MEIPASS
-
-        cfg_file = cfg_file if exists(cfg_file) else get_resource(cfg_file)
-        self.config = ConfigLoader.load(cfg_file)
-
         title = "Pi Veilance"
-        stylesheet = join(resource_folder, "styles.qss")
-        icon = join(resource_folder, "bodomlogo-small.jpg")
+        props = "config.ini"
+        stylesheet = get_resource("styles.qss")
+        icon = get_resource("bodomlogo-small.jpg")
+
+        self.config = ConfigLoader.load(
+            props if exists(props) else get_resource(props))
 
         self.setCamClass()
         self.beginDataFlows()
@@ -92,7 +89,7 @@ class PiWndow(QMainWindow):
     def beginDataFlows(self):
         self.camlist = []
         self.cols = 3
-        self.generator = self.globalGen(self)
+        self.generator = self.globalGen(self.config.get_config("cameras"))
         self.generator.updateList.connect(self.setCameraGrid)
         self.generator.start()
 
@@ -107,7 +104,10 @@ class PiWndow(QMainWindow):
             return
 
         # see if there are new column count as calculated by compute
-        new_cols, dimensions, camSize = self.computeGrid(len(self.camlist))
+        width = self.widget.frameGeometry().width()
+        height = self.widget.frameGeometry().height()
+        new_cols, dimensions, camSize = \
+            util.computeGrid(len(self.camlist), width, height)
 
         if not self.stretch:
             self.grid.setContentsMargins(*dimensions)
@@ -130,47 +130,6 @@ class PiWndow(QMainWindow):
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
         self.setCamSize.emit(camSize)
-
-    def computeGrid(self, camCount):
-
-        width = self.widget.frameGeometry().width()
-        height = self.widget.frameGeometry().height()
-        cols, rows, sideLength = self.calculate_cols(camCount, width, height)
-        remainder_height = height - sideLength * rows
-
-        if remainder_height < 0:
-            sideLength = sideLength - abs(remainder_height / rows)
-
-        rheight = max(height - sideLength * rows, 0) / 2
-        vheight = max(width - sideLength * cols, 0) / 2
-        dimensions = (vheight, rheight, vheight, rheight)
-        return cols, dimensions, sideLength
-
-    def calculate_cols(self, camCount, width, height):
-        """
-        # Iterative computation to determine actual cols
-
-        """
-        # Start by initial guess that ncols = ncams
-        cols = rows = sideLength = camCount
-        while (cols > 0):
-            rows = math.ceil(camCount / cols)
-            sideLength = width / cols
-            if (height - sideLength * rows) < sideLength:
-                break
-            cols -= 1
-        cols = 1 if cols < 1 else cols
-        return cols, rows, sideLength
-
-    def deleteItems(self, layout):
-        if layout is not None:
-            while layout.count():
-                item = layout.takeAt(0)
-                widget = item.widget()
-                if widget is not None:
-                    widget.deleteLater()
-                else:
-                    self.deleteItems(item.layout())
 
 
 if __name__ == '__main__':

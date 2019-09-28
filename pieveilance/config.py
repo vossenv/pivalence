@@ -23,6 +23,9 @@ class Config:
     def get_int(self, name, default=None):
         return int(self.get(name, default))
 
+    def get_float(self, name, default=None):
+        return float(self.get(name, default))
+
     def get_list(self, name, default=None):
         return list(self.get(name, default))
 

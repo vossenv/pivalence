@@ -10,6 +10,7 @@ cleandir:
 	-$(RM) $(output_dir)
 
 standalone:
+	make cleandir
 	pyinstaller --clean --noconfirm .build/pieveilance.spec
 
 wheel:

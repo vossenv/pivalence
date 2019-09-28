@@ -1,16 +1,15 @@
-from PyQt5.QtCore import QThread, pyqtSlot, Qt, QSize, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QSizePolicy
-import requests
+
 
 class DummyGenerator(QThread):
-    updateList= pyqtSignal(object)
+    updateList = pyqtSignal(object)
     updateCameras = pyqtSignal(object)
 
     def __init__(self, parent=None):
         super(DummyGenerator, self).__init__(parent)
         self.num_cams = 7
-
 
     def getCameraList(self):
         return [x for x in range(0, self.num_cams)]
@@ -18,9 +17,10 @@ class DummyGenerator(QThread):
     def run(self):
         self.updateList.emit(self.getCameraList())
 
+
 class DummyCamera(QLabel):
 
-    def __init__(self,  source=None, size=300, name="default", scaled=False, parent=None):
+    def __init__(self, source=None, size=300, name="default", scaled=False, parent=None):
         super(DummyCamera, self).__init__(parent)
         self.name = name
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -40,6 +40,5 @@ class DummyCamera(QLabel):
 
         qp = QPixmap("resources/ent.jpg")
         self.px = qp
-        qp = qp.scaled(300, 300)#, Qt.KeepAspectRatio)
+        qp = qp.scaled(300, 300)  # , Qt.KeepAspectRatio)
         self.setPixmap(qp)
-
