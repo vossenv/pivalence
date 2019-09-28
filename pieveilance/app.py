@@ -89,7 +89,7 @@ class PiWndow(QMainWindow):
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(icon))
         self.setCentralWidget(self.widget)
-        self.statusBar().showMessage('Placeholder')
+        #self.statusBar().showMessage('Placeholder')
         self.grid = QGridLayout()
         self.grid.setSpacing(0)
         self.grid.setContentsMargins(0, 0, 0, 0)
@@ -115,20 +115,32 @@ class PiWndow(QMainWindow):
 
         cmenu = QMenu(self)
         quitAct = cmenu.addAction("Quit")
+        fullScreenAct = cmenu.addAction("Toggle fullscreen")
+        stretchAct = cmenu.addAction("Toggle stretch")
+
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
         if action == quitAct:
             qApp.quit()
+        elif action == fullScreenAct:
+            if self.isFullScreen():
+                self.showNormal()
+            else:
+                self.showFullScreen()
+        elif action == stretchAct:
+            self.stretch = not self.stretch
+            self.setCameraGrid(adjust=True)
+
 
     def beginDataFlows(self):
         self.camlist = []
-        self.cols = 3
+        self.cols = 0
         self.generator = self.globalGen(self.config.get_config("cameras"))
         self.generator.updateList.connect(self.setCameraGrid)
         self.generator.start()
 
     @pyqtSlot(object, name="camgrid")
     @pyqtSlot(name="resize")
-    def setCameraGrid(self, camlist=None):
+    def setCameraGrid(self, camlist=None, adjust=False):
 
         # Must keep as instance var in case called with none
         self.camlist = camlist or self.camlist
@@ -144,9 +156,11 @@ class PiWndow(QMainWindow):
 
         if not self.stretch:
             self.grid.setContentsMargins(*dimensions)
+        else:
+            self.grid.setContentsMargins(0,0,0,0)
 
         # Cameras must be repositioned
-        if new_cols != self.cols:
+        if adjust or new_cols != self.cols:
 
             # calculate new rows and positions
             self.cols = new_cols
