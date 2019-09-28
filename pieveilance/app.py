@@ -1,6 +1,8 @@
+import shutil
 import sys
 from os.path import exists
 
+import click
 import math
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -12,21 +14,50 @@ from pieveilance.config import *
 from pieveilance.resources import get_resource
 
 
+@click.command()
+@click.option('--debug',
+              is_flag=True,
+              default=None)
+@click.option('-c', '--config',
+              help="point to config ini by name",
+              type=click.Path(exists=True),
+              default=None)
+@click.option('-f', '--fullscreen',
+              help="toggle fullscreen",
+              is_flag=True,
+              default=None)
+@click.option('-s', '--stretch',
+              help="toggle stretch",
+              is_flag=True,
+              default=None)
+
+def main(**kwargs):
+    app = QApplication(sys.argv)
+    ex = PiWndow(**kwargs)
+    sys.exit(app.exec_())
+
+
 class PiWndow(QMainWindow):
     setCamSize = pyqtSignal(object)
     resized = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, **options):
         super().__init__()
 
         title = "Pi Veilance"
-        props = "config.ini"
+        default_properties = "config.ini"
         stylesheet = get_resource("styles.qss")
-        icon = get_resource("bodomlogo-small.jpg")
+        icon = get_resource("icon.ico")
 
-        self.config = ConfigLoader.load(
-            props if exists(props) else get_resource(props))
+        if options['config']:
+            props = options['config']
+        else:
+            props = default_properties
+            if not exists(props):
+                shutil.copy(get_resource(props), ".")
 
+        self.config = ConfigLoader.load(props)
+        self.options = options
         self.setCamClass()
         self.beginDataFlows()
         self.initWindow(stylesheet, title, icon)
@@ -46,8 +77,10 @@ class PiWndow(QMainWindow):
 
     def initWindow(self, stylesheet, title, icon):
         view_config = self.config.get_config("view")
-        self.fullscreen = view_config.get_bool('fullscreen', False)
-        self.stretch = view_config.get_bool('stretch', False)
+        self.fullscreen = (self.options['fullscreen']
+                           or view_config.get_bool('fullscreen', False))
+        self.stretch = (self.options['stretch']
+                        or view_config.get_bool('stretch', False))
         self.widget = QWidget()
         self.resize(1024, 768)
         qr = self.frameGeometry()
@@ -133,6 +166,4 @@ class PiWndow(QMainWindow):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = PiWndow()
-    sys.exit(app.exec_())
+    main()

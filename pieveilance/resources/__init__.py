@@ -7,7 +7,7 @@ __name__ = dirname(__file__).split(os.sep)[-1]
 
 def get_resource_dir():
     if getattr(sys, 'frozen', False):
-        return sys._MEIPASS
+        return join(sys._MEIPASS, __name__)
     else:
         return dirname(realpath(__file__))
 

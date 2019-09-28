@@ -3,12 +3,11 @@
 
 block_cipher = None
 
-a = Analysis(['../pieveilance/pieveilance.py'],
+# noinspection PyUnresolvedReferences
+a = Analysis(['../pieveilance/app.py'],
              pathex=[],
              binaries=[( '../pieveilance/resources/Qt5Core.dll', 'PyQt5/Qt/bin')],
-             datas=  [( '../pieveilance/resources/*.jpg', 'resources' ),
-                      ( '../pieveilance/resources/*.png', 'resources' ),
-                      ( '../pieveilance/resources/*.qss', 'resources' )],
+             datas=  [( '../pieveilance/resources', 'resources' )],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -17,8 +16,12 @@ a = Analysis(['../pieveilance/pieveilance.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
+
+# noinspection PyUnresolvedReferences
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+
+# noinspection PyUnresolvedReferences
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
@@ -26,20 +29,10 @@ exe = EXE(pyz,
           a.datas,
           [],
           exclude_binaries=False,
-          name='piValence',
-          debug=True,
+          name='piVeilence',
+          debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True,
-          icon='../.build/usticon.ico' )
-
-# coll = COLLECT(exe,
-#               a.binaries,
-#               a.zipfiles,
-#               a.datas,
-#               strip=False,
-#               upx=True,
-#               name='basic')
-
-
+          console=False,
+          icon='../pieveilance/resources/icon.ico' )
