@@ -6,8 +6,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import pieveilance.resources as resources
-from pieveilance.camera import *
 from pieveilance.dummy import *
+from pieveilance.camera import *
 
 
 class PiWndow(QMainWindow):
@@ -26,6 +26,7 @@ class PiWndow(QMainWindow):
         title = "Pi Veilance"
         stylesheet = join(resource_dir, "styles.qss")
         icon = join(resource_dir, "bodomlogo-small.jpg")
+        self.stretch = False
 
         self.global_cam = DummyCamera
         self.global_gen = DummyGenerator
@@ -86,6 +87,7 @@ class PiWndow(QMainWindow):
         self.generator.start()
 
     @pyqtSlot(object, name="camgrid")
+    @pyqtSlot(name="resize")
     def setCameraGrid(self, camlist=None):
 
         # Must keep as instance var in case called with none
@@ -96,13 +98,14 @@ class PiWndow(QMainWindow):
 
         # see if there are new column count as calculated by compute
         new_cols, dimensions, camSize = self.computeGrid(len(self.camlist))
-        self.grid.setContentsMargins(*dimensions)
+
+        if not self.stretch:
+            self.grid.setContentsMargins(*dimensions)
+
 
         # Cameras must be repositioned
-        if new_cols == self.cols:
-            self.setCamSize.emit(camSize)
+        if new_cols != self.cols:
 
-        else:
             # clear the layout
             for i in reversed(range(self.grid.count())):
                 self.grid.takeAt(i).widget().deleteLater()
@@ -117,6 +120,7 @@ class PiWndow(QMainWindow):
                 cam = self.global_cam(self.generator, camSize, c)
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
+        self.setCamSize.emit(camSize)
 
     def computeGrid(self, camCount):
 

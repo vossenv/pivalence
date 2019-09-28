@@ -1,10 +1,12 @@
-from PyQt5.QtCore import QThread, pyqtSlot, Qt, QSize, pyqtSignal
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtWidgets import QLabel, QSizePolicy
-import requests
+import base64
 import json
 import time
-import base64
+
+import requests
+from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QLabel, QSizePolicy
+
 
 class PiCamGenerator(QThread):
     updateList = pyqtSignal(object)
@@ -31,13 +33,12 @@ class PiCamGenerator(QThread):
             time.sleep(self.sleep)
 
 
-
-
 class Camera(QLabel):
     def __init__(self, source=None, size=300, name="default", parent=None):
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
+        #self.setScaledContents(True)
         self.px = None
         self.name = name
         self.size = size
@@ -51,29 +52,12 @@ class Camera(QLabel):
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
-
-        # if self.px:
-        #     return
-
-        # qp = QPixmap("resources/ent.jpg")
-        # self.px = qp
-        # qp = qp.scaled(300, 300, Qt.KeepAspectRatio)
-        # self.setPixmap(qp)
-
         if self.name in camData:
             img = self.getImage(camData[self.name]['image'])
-            qp = QPixmap()
-            qp.loadFromData(img)
-            self.px = qp
+            self.px = QPixmap()
+            self.px.loadFromData(img)
             self.setFrameSize(self.size)
 
     def getImage(self, data):
         byte = data.encode('utf-8')
         return base64.decodebytes(byte)
-
-
-
-
-
-
-
