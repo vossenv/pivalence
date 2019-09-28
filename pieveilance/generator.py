@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QThread, pyqtSlot, Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QSizePolicy
-
+import requests
 
 class DummyGenerator(QThread):
 
@@ -47,7 +47,53 @@ class DummyCamera(QLabel):
 
 
 
+    def computeGrid(self, camCount):
 
+        if not camCount:
+            return
+
+        Ncam = camCount
+        width = self.widget.frameGeometry().width()  # - self.h_margin*2
+        height = self.widget.frameGeometry().height()  # - self.v_margin*2
+
+        self.h_margin = 0  # if width > 700 and height > 50 else  0
+        self.v_margin = 0  # 50 if height > 900 else 0
+
+        width -= self.h_margin * 2
+        height -= self.v_margin * 2
+        cols = Ncam
+
+        while True:
+
+            rows = math.ceil(Ncam / cols)
+            side_length = width / cols
+            remainder = height - side_length * rows
+
+            if remainder > side_length:
+                cols = cols - 1
+                if cols == 0:
+                    cols = 1
+                    break
+            else:
+                break
+
+        current_cols = self.cols
+        self.cols = cols
+        self.sl = side_length
+
+        t = height - self.sl * rows - 2 * self.h_margin
+        n = rows
+        if t < 0:
+            self.sl = self.sl - abs(t / n)
+
+        rheight = max(height - self.sl * rows, 0) / 2 + self.v_margin
+        vheight = max(width - self.sl * cols, 0) / 2 + self.h_margin
+
+        self.setCamSize.emit(self.sl)
+        self.grid.setContentsMargins(vheight, rheight, vheight, rheight)
+
+        if self.cols != current_cols:
+            return self.cols
 
 #
 # class Camera(QLabel):
