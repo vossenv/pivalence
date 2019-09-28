@@ -1,13 +1,14 @@
 import sys
-from os.path import join
+from os.path import exists
 
 import math
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-import pieveilance.resources as resources
-from pieveilance.dummy import *
 from pieveilance.camera import *
+from pieveilance.config import *
+from pieveilance.dummy import *
+from pieveilance.resources import *
 
 
 class PiWndow(QMainWindow):
@@ -15,32 +16,41 @@ class PiWndow(QMainWindow):
     resized = pyqtSignal()
 
     def __init__(self):
-
-        # noinspection PyArgumentList
         super().__init__()
 
-        resource_dir = resources.resource_dir
+        cfg_file = "config.ini"
+        resource_folder = resource_dir
         if getattr(sys, 'frozen', False):
-            resource_dir = join(sys._MEIPASS, resources.__name__)
+            resource_folder = sys._MEIPASS
+
+        cfg_file = cfg_file if exists(cfg_file) else get_resource(cfg_file)
+        self.config = ConfigLoader.load(cfg_file)
 
         title = "Pi Veilance"
-        stylesheet = join(resource_dir, "styles.qss")
-        icon = join(resource_dir, "bodomlogo-small.jpg")
-        self.stretch = False
+        stylesheet = join(resource_folder, "styles.qss")
+        icon = join(resource_folder, "bodomlogo-small.jpg")
 
-        self.global_cam = DummyCamera
-        self.global_gen = DummyGenerator
-
-        self.global_cam = Camera
-        self.global_gen = PiCamGenerator
-
-        self.initWindow(stylesheet, title, icon)
+        self.setCamClass()
         self.beginDataFlows()
-        self.show()
+        self.initWindow(stylesheet, title, icon)
+        self.showFullScreen() if self.fullscreen else self.show()
+
+    def setCamClass(self):
+        self.camClass = self.config.get('cameras', 'type', 'picam')
+        if self.camClass == "picam":
+            self.globalCam = Camera
+            self.globalGen = PiCamGenerator
+
+        elif self.camClass == "dummy":
+            self.globalCam = DummyCamera
+            self.globalGen = DummyGenerator
+        else:
+            raise TypeError("Unknown camera class: " + self.camClass)
 
     def initWindow(self, stylesheet, title, icon):
-
-        # noinspection PyArgumentList
+        view_config = self.config.get_config("view")
+        self.fullscreen = view_config.get_bool('fullscreen', False)
+        self.stretch = view_config.get_bool('stretch', False)
         self.widget = QWidget()
         self.resize(1024, 768)
         qr = self.frameGeometry()
@@ -82,7 +92,7 @@ class PiWndow(QMainWindow):
     def beginDataFlows(self):
         self.camlist = []
         self.cols = 3
-        self.generator = self.global_gen(self)
+        self.generator = self.globalGen(self)
         self.generator.updateList.connect(self.setCameraGrid)
         self.generator.start()
 
@@ -102,22 +112,21 @@ class PiWndow(QMainWindow):
         if not self.stretch:
             self.grid.setContentsMargins(*dimensions)
 
-
         # Cameras must be repositioned
         if new_cols != self.cols:
-
-            # clear the layout
-            for i in reversed(range(self.grid.count())):
-                self.grid.takeAt(i).widget().deleteLater()
 
             # calculate new rows and positions
             self.cols = new_cols
             rows = math.ceil(len(self.camlist) / new_cols)
             positions = [(i, j) for i in range(rows) for j in range(new_cols)]
 
+            # clear the layout
+            for i in reversed(range(self.grid.count())):
+                self.grid.takeAt(i).widget().deleteLater()
+
             # add the cameras
             for i, c in enumerate(self.camlist):
-                cam = self.global_cam(self.generator, camSize, c)
+                cam = self.globalCam(self.generator, camSize, c, self.stretch)
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
         self.setCamSize.emit(camSize)
@@ -126,22 +135,14 @@ class PiWndow(QMainWindow):
 
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
-
-        h_margin = 0  # if width > 700 and height > 50 else  0
-        v_margin = 0  # if height > 900 else 0
-        # width -= h_margin * 2
-        # height -= v_margin * 2
-
         cols, rows, sideLength = self.calculate_cols(camCount, width, height)
-
-        remainder_height = height - sideLength * rows - 2 * h_margin
+        remainder_height = height - sideLength * rows
 
         if remainder_height < 0:
             sideLength = sideLength - abs(remainder_height / rows)
 
-        rheight = max(height - sideLength * rows, 0) / 2 + v_margin
-        vheight = max(width - sideLength * cols, 0) / 2 + h_margin
-
+        rheight = max(height - sideLength * rows, 0) / 2
+        vheight = max(width - sideLength * cols, 0) / 2
         dimensions = (vheight, rheight, vheight, rheight)
         return cols, dimensions, sideLength
 
@@ -160,6 +161,16 @@ class PiWndow(QMainWindow):
             cols -= 1
         cols = 1 if cols < 1 else cols
         return cols, rows, sideLength
+
+    def deleteItems(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.deleteItems(item.layout())
 
 
 if __name__ == '__main__':

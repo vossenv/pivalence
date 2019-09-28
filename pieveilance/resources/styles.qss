@@ -20,7 +20,7 @@
     font-size: 18px;
     font-family: Courier;
     color: #05ff00;
-    background-color: #6e6e6e;
+    /*background-color: #6e6e6e;*/
     qproperty-alignment: AlignCenter;
 }
 

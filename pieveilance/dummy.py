@@ -20,7 +20,7 @@ class DummyGenerator(QThread):
 
 class DummyCamera(QLabel):
 
-    def __init__(self, source=None, size=300, name="default", parent=None,):
+    def __init__(self,  source=None, size=300, name="default", scaled=False, parent=None):
         super(DummyCamera, self).__init__(parent)
         self.name = name
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -40,6 +40,6 @@ class DummyCamera(QLabel):
 
         qp = QPixmap("resources/ent.jpg")
         self.px = qp
-        qp = qp.scaled(300, 300, Qt.KeepAspectRatio)
+        qp = qp.scaled(300, 300)#, Qt.KeepAspectRatio)
         self.setPixmap(qp)
 

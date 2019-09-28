@@ -34,14 +34,14 @@ class PiCamGenerator(QThread):
 
 
 class Camera(QLabel):
-    def __init__(self, source=None, size=300, name="default", parent=None):
+    def __init__(self, source=None, size=300, name="default", scaled=False, parent=None):
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
-        #self.setScaledContents(True)
         self.px = None
         self.name = name
         self.size = size
+        self.setScaledContents(scaled)
         source.updateCameras.connect(self.setImage)
 
     @pyqtSlot(object, name="size")
