@@ -11,7 +11,7 @@ cleandir:
 
 standalone:
 	make cleandir
-	pyinstaller --clean --noconfirm .build/pieveilance.spec
+	pyinstaller --clean --noconfirm .build/piveilance.spec
 
 wheel:
 	make cleandir
@@ -20,3 +20,6 @@ wheel:
 all:
 	make wheel
 	make standalone
+
+upload:
+	twine upload dist/*.tar.gz dist/*.whl

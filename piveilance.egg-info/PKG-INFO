@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: piveilance
+Version: 1.0.2
+Summary: PiCam Surveilance App
+Home-page: https://github.com/vossenv/piveilance
+Maintainer: Danimae Vossen
+Maintainer-email: vossen.dm@gmail.com
+License: MIT
+Description: pifeed
+        
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
+Provides-Extra: setup

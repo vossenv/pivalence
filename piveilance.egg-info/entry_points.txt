@@ -1,0 +1,3 @@
+[console_scripts]
+piveilance = piveilance.app:main
+

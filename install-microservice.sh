@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-dir="/home/kloud/.pieveilance"
+dir="/home/kloud/.piveilance"
 name="piveilance"
 
 echo ""
@@ -30,7 +30,7 @@ sudo tee $dir/startup.sh <<-EOF > /dev/null
 sleep 10
 export DISPLAY=:0
 source venv/bin/activate
-pieveilance
+piveilance
 EOF
 
 sudo systemctl daemon-reload

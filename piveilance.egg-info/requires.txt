@@ -1,0 +1,11 @@
+click
+requests
+
+[:sys_platform=="win32"]
+pyqt5
+pyqt5-sip
+
+[setup]
+pyinstaller
+wheel
+twine
