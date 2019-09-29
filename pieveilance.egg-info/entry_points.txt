@@ -1,0 +1,3 @@
+[console_scripts]
+pieveilance = pieveilance.app:main
+
