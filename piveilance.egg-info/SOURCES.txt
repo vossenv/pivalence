@@ -2,6 +2,7 @@ README.md
 setup.cfg
 setup.py
 piveilance/__init__.py
+piveilance/_version.py
 piveilance/app.py
 piveilance/config.py
 piveilance/util.py

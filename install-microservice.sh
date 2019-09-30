@@ -27,9 +27,10 @@ EOF
 
 sudo tee $dir/startup.sh <<-EOF > /dev/null
 #!/usr/bin/env bash
-sleep 10
+#sleep 10
 export DISPLAY=:0
 source venv/bin/activate
+pip install --upgrade piveilance
 piveilance
 EOF
 

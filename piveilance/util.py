@@ -3,7 +3,7 @@ import math
 
 def computeGrid(camCount, width, height):
 
-    cols, rows, sideLength = calculate_cols(camCount, width, height)
+    cols, rows, sideLength = calculateCols(camCount, width, height)
     remainder_height = height - sideLength * rows
 
     if remainder_height < 0:
@@ -15,7 +15,7 @@ def computeGrid(camCount, width, height):
     return cols, dimensions, sideLength
 
 
-def calculate_cols(camCount, width, height):
+def calculateCols(camCount, width, height):
     """
     # Iterative computation to determine actual cols
 
@@ -30,3 +30,10 @@ def calculate_cols(camCount, width, height):
         cols -= 1
     cols = 1 if cols < 1 else cols
     return cols, rows, sideLength
+
+def areSetsEqual(a, b):
+    a = a or set()
+    b = b or set()
+    a = set(a)
+    b = set(b)
+    return  (a - b) == (b - a)

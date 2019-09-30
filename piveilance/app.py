@@ -8,6 +8,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from piveilance import util
+from piveilance._version import __version__
 from piveilance.cameras.camera import *
 from piveilance.cameras.dummy import *
 from piveilance.config import *
@@ -30,7 +31,6 @@ from piveilance.resources import get_resource
               help="toggle stretch",
               is_flag=True,
               default=None)
-
 def main(**kwargs):
     app = QApplication(sys.argv)
     ex = PiWndow(**kwargs)
@@ -57,6 +57,7 @@ class PiWndow(QMainWindow):
                 shutil.copy(get_resource(props), ".")
 
         self.config = ConfigLoader.load(props)
+        self.cam_config = self.config.get_config('cameras')
         self.options = options
         self.setCamClass()
         self.beginDataFlows()
@@ -64,7 +65,7 @@ class PiWndow(QMainWindow):
         self.showFullScreen() if self.fullscreen else self.show()
 
     def setCamClass(self):
-        self.camClass = self.config.get('cameras', 'type', 'picam')
+        self.camClass = self.cam_config.get('type', 'picam')
         if self.camClass == "picam":
             self.globalCam = Camera
             self.globalGen = PiCamGenerator
@@ -89,7 +90,7 @@ class PiWndow(QMainWindow):
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(icon))
         self.setCentralWidget(self.widget)
-        #self.statusBar().showMessage('Placeholder')
+        self.statusBar().showMessage('Version: ' + __version__)
         self.grid = QGridLayout()
         self.grid.setSpacing(0)
         self.grid.setContentsMargins(0, 0, 0, 0)
@@ -130,11 +131,11 @@ class PiWndow(QMainWindow):
             self.stretch = not self.stretch
             self.setCameraGrid(adjust=True)
 
-
     def beginDataFlows(self):
         self.camlist = []
         self.cols = 0
-        self.generator = self.globalGen(self.config.get_config("cameras"))
+        self.max_cameras = self.cam_config.get_int('max_allowed', 0)
+        self.generator = self.globalGen(self.cam_config)
         self.generator.updateList.connect(self.setCameraGrid)
         self.generator.start()
 
@@ -142,11 +143,17 @@ class PiWndow(QMainWindow):
     @pyqtSlot(name="resize")
     def setCameraGrid(self, camlist=None, adjust=False):
 
+        if camlist and not util.areSetsEqual(camlist, self.camlist):
+            adjust = True
+
         # Must keep as instance var in case called with none
         self.camlist = camlist or self.camlist
 
         if not self.camlist:
             return
+
+        if self.max_cameras > 0:
+            self.camlist = self.camlist[0:self.max_cameras]
 
         # see if there are new column count as calculated by compute
         width = self.widget.frameGeometry().width()
@@ -157,7 +164,7 @@ class PiWndow(QMainWindow):
         if not self.stretch:
             self.grid.setContentsMargins(*dimensions)
         else:
-            self.grid.setContentsMargins(0,0,0,0)
+            self.grid.setContentsMargins(0, 0, 0, 0)
 
         # Cameras must be repositioned
         if adjust or new_cols != self.cols:

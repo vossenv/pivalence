@@ -17,6 +17,7 @@ class PiCamGenerator(QThread):
         self.list_url = config.get('list_url')
         self.data_url = config.get('data_url')
         self.sleep = config.get_float('update_interval', 0.1)
+        self.list_refresh = config.get_float('list_refresh', 10)
 
     def getCameraList(self):
         cams = requests.get(self.list_url).content
@@ -29,10 +30,14 @@ class PiCamGenerator(QThread):
         self.updateCameras.emit(camData)
 
     def run(self):
+        start = time.time()
         self.updateList.emit(self.getCameraList())
         while True:
             self.update()
             time.sleep(self.sleep)
+            if time.time() - start > self.list_refresh:
+                self.updateList.emit(self.getCameraList())
+                start = time.time()
 
 
 class Camera(QLabel):

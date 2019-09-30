@@ -1,7 +1,4 @@
 
-
-
-
 .QWidget {
     border: 2px solid black;
     border-radius: 0px;
@@ -14,7 +11,7 @@
 
 
 .DummyCamera, .Camera {
-    border: 1px solid #ffffff;
+    border: 1px solid white;
     border-radius: 0px;
     font-weight: bold;
     font-size: 18px;
@@ -25,3 +22,9 @@
 }
 
 
+.QStatusBar {
+    padding-left: 8px;
+    background: black;
+    color: #34eb52;
+    font-weight: normal;
+}

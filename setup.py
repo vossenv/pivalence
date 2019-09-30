@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from piveilance._version import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -10,7 +11,7 @@ setup_deps = [
       ],
 
 setup(name='piveilance',
-      version='1.0.2',
+      version=__version__,
       description='PiCam Surveilance App',
       long_description=long_description,
       long_description_content_type="text/markdown",
@@ -41,8 +42,3 @@ setup(name='piveilance',
           ]
       },
       )
-
-# python setup.py sdist bdist_wheel
-# twine upload --repository testpypi dist/*.tar.gz dist/*.whl
-#
-
