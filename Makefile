@@ -30,4 +30,3 @@ deploy:
 all:
 	make build
 	make upload
-	make deploy
