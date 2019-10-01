@@ -25,7 +25,8 @@ def calculateCols(camCount, width, height):
     while (cols > 0):
         rows = math.ceil(camCount / cols)
         sideLength = width / cols
-        if (height - sideLength * rows) < sideLength:
+        if ((height - sideLength * rows) < sideLength
+                and (rows*cols - camCount) <= 1):
             break
         cols -= 1
     cols = 1 if cols < 1 else cols
@@ -37,3 +38,16 @@ def areSetsEqual(a, b):
     a = set(a)
     b = set(b)
     return  (a - b) == (b - a)
+
+
+class ImageManip():
+
+    @classmethod
+    def crop(cls, image, top, left, bottom, right):
+        w = image.width() - left - right
+        h = image.height() - top - bottom
+        return image.copy(left, top, w, h)
+
+    @classmethod
+    def cropCenter(cls, image, size):
+        return cls.crop(image, size, size, size, size)

@@ -24,3 +24,5 @@ piveilance/resources/ent_full.jpeg
 piveilance/resources/exit.png
 piveilance/resources/icon.ico
 piveilance/resources/styles.qss
+test/__init__.py
+test/test_manip.py

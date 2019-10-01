@@ -179,8 +179,10 @@ class PiWndow(QMainWindow):
                 self.grid.takeAt(i).widget().deleteLater()
 
             # add the cameras
-            for i, c in enumerate(self.camlist):
-                cam = self.globalCam(self.generator, camSize, c, self.stretch)
+            for i, name in enumerate(self.camlist):
+                cam = self.globalCam(self.cam_config, self.generator,
+                                     camSize, name, self.stretch)
+
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
         self.setCamSize.emit(camSize)

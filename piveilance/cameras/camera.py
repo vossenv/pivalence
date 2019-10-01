@@ -4,8 +4,10 @@ import time
 
 import requests
 from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QLabel, QSizePolicy
+
+from piveilance.util import ImageManip
 
 
 class PiCamGenerator(QThread):
@@ -41,14 +43,28 @@ class PiCamGenerator(QThread):
 
 
 class Camera(QLabel):
-    def __init__(self, source=None, size=300, name="default", scaled=False, parent=None):
+    def __init__(self,
+                 config,
+                 source=None,
+                 size=300,
+                 name="default",
+                 scaled=False,
+                 parent=None):
+
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
         self.px = None
         self.name = name
         self.size = size
+        self.crop = 1
         self.setScaledContents(scaled)
+
+        crop_key = "alarm_ratio" if name in ["2048", "2049"] else "crop_ratio"
+        self.crop_ratio = config.get_float(crop_key, 1)
+        if self.crop_ratio < 0 or self.crop_ratio > 1:
+            raise ValueError("Crop cannot be negative or inverse (>1)")
+
         source.updateCameras.connect(self.setImage)
 
     @pyqtSlot(object, name="size")
@@ -60,9 +76,19 @@ class Camera(QLabel):
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
         if self.name in camData:
-            img = self.getImage(camData[self.name]['image'])
-            self.px = QPixmap()
-            self.px.loadFromData(img)
+            data = self.getImage(camData[self.name]['image'])
+
+            img = QImage()
+            img.loadFromData(data)
+
+            # Take from right - preserving text
+            if img.width() > img.height():
+                crop = (img.width() - img.height()) * self.crop_ratio
+                img = ImageManip.crop(img, 0, 0, 0, crop)
+
+
+
+            self.px = QPixmap().fromImage(img)
             self.setFrameSize(self.size)
 
     def getImage(self, data):
