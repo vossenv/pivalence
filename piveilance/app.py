@@ -55,7 +55,7 @@ class PiWndow(QMainWindow):
                 shutil.copy(get_resource(props), ".")
 
         self.config = Config.from_yaml(props)
-        self.config.update_or_add('view', cli_options)
+        self.config.merge('view', cli_options)
 
         self.cam_config = self.config.get_config('cameras')
         self.view_config = self.config.get_config('view')

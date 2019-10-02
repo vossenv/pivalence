@@ -17,6 +17,7 @@ cameras:
     2048:
       crop_ratio: 1
       direction: center
+      priority: 1
 
     2049:
       crop_ratio: 1

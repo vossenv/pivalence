@@ -1,0 +1,41 @@
+adobe_users:
+  connectors:
+    umapi:
+      1: connector-umapi.yml
+      2: connector-umap2.yml
+  exclude_adobe_groups: True
+  exclude_identity_types:
+    - adobeID
+    - enterpriseID
+    - dictionary:
+        key1:
+          - a
+          - b
+        key2: x
+
+directory_users:
+  group_sync_options:
+    auto_create: true
+  groups:
+    - adobe_groups:
+        - Wizardry
+      directory_group: ELA 6 (6A ELA)
+    - adobe_groups:
+        - Wizardry
+      directory_group: courses::Algebra 2::teachers
+    - adobe_groups:
+        - Wizardry
+      directory_group: schools::ClassLink HS::students
+  user_identity_type: federatedID
+invocation_defaults:
+  adobe_only_user_action: exclude
+
+limits:
+  max_adobe_only_users: 200
+logging:
+  console_log_level: info
+  new key:
+    new_k1: [1, 2]
+    new_k2:
+      - 3
+      - 4
