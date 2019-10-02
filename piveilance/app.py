@@ -16,9 +16,6 @@ from piveilance.resources import get_resource
 
 
 @click.command()
-@click.option('--debug',
-              is_flag=True,
-              default=None)
 @click.option('-c', '--config',
               help="point to config ini by name",
               type=click.Path(exists=True),
@@ -41,24 +38,32 @@ class PiWndow(QMainWindow):
     setCamSize = pyqtSignal(object)
     resized = pyqtSignal()
 
-    def __init__(self, **options):
+    def __init__(self, **cli_options):
         super().__init__()
 
         title = "Pi Veilance"
-        default_properties = "config.ini"
+        default_properties = "config.yaml"
         stylesheet = get_resource("styles.qss")
         icon = get_resource("icon.ico")
+        cli_options = {k: v for k, v in cli_options.items() if v}
 
-        if options['config']:
-            props = options['config']
+        if cli_options.get('config'):
+            props = cli_options.pop('config')
         else:
             props = default_properties
             if not exists(props):
                 shutil.copy(get_resource(props), ".")
 
-        self.config = ConfigLoader.load(props)
+        self.config = Config.from_yaml(props)
+        self.config.update_or_add('view', cli_options)
+
         self.cam_config = self.config.get_config('cameras')
-        self.options = options
+        self.view_config = self.config.get_config('view')
+
+        overrides = self.cam_config.get('overrides')
+        if overrides:
+           self.cam_config['overrides'] = {str(k):v for k, v in overrides.items()}
+
         self.setCamClass()
         self.beginDataFlows()
         self.initWindow(stylesheet, title, icon)
@@ -77,11 +82,9 @@ class PiWndow(QMainWindow):
             raise TypeError("Unknown camera class: " + self.camClass)
 
     def initWindow(self, stylesheet, title, icon):
-        view_config = self.config.get_config("view")
-        self.fullscreen = (self.options['fullscreen']
-                           or view_config.get_bool('fullscreen', False))
-        self.stretch = (self.options['stretch']
-                        or view_config.get_bool('stretch', False))
+        self.fullscreen = self.view_config.get_bool('fullscreen', False)
+        self.stretch = self.view_config.get_bool('stretch', False)
+
         self.widget = QWidget()
         self.resize(1024, 768)
         qr = self.frameGeometry()

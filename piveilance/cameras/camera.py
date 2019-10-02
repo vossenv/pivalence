@@ -3,6 +3,7 @@ import json
 import time
 
 import requests
+from copy import deepcopy
 from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QLabel, QSizePolicy
@@ -54,11 +55,15 @@ class Camera(QLabel):
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
+        self.setScaledContents(scaled)
         self.px = None
         self.name = name
         self.size = size
-        self.crop = 1
-        self.setScaledContents(scaled)
+        self.options = deepcopy(config)
+
+        overrides = self.options.get_dict('overrides')
+        if self.name in overrides:
+           self.options.update(overrides[self.name])
 
         crop_key = "alarm_ratio" if name in ["2048", "2049"] else "crop_ratio"
         self.crop_ratio = config.get_float(crop_key, 1)
