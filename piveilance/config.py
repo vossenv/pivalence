@@ -31,8 +31,9 @@ class Config(UserDict):
         val = self.get_as(name, default, required)
         return str(val).lower() in ['true', '1']
 
-    def get_string(self, name, default=False, required=False):
-        return self.get_as(name, default, required, str)
+    def get_string(self, name, default=False, required=False, decode=False):
+        val = self.get_as(name, default, required, str)
+        return Parser.decode(val, True) if decode else val
 
     def get_int(self, name, default=False, required=False):
         return self.get_as(name, default, required, int)
@@ -215,6 +216,23 @@ class Parser():
     def correct_path(path):
         path = re.split('[/\\\\]+', path)
         return os.sep.join(path)
+
+    @staticmethod
+    def decode(text, lower=False):
+        if not text:
+            return
+        try:
+            text = text.decode()
+        except:
+            pass
+
+        text = str(text).strip()
+        return text.lower() if lower else text
+
+    @staticmethod
+    def compare_str(a, b):
+        return Parser.decode(a, True) == Parser.decode(b, True)
+
 
 
 class ConfigParsingException(Exception):

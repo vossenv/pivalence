@@ -8,6 +8,7 @@ from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
+from piveilance.config import Parser
 from piveilance.util import ImageManip
 
 
@@ -60,10 +61,15 @@ class Camera(QLabel):
         self.setScaledContents(options.get_bool('stretch'))
         self.px = None
         self.name = name
-        self.size = options.get_int('size')
         self.options = deepcopy(options)
-        self.crop_ratio = options.get_float('crop_ratio')
-        overrides = self.options.get_dict('overrides')
+
+        for o, v in self.options.get_dict('overrides').items():
+            if Parser.compare_str(o, name):
+                self.options.update(v)
+
+        self.size = self.options.get_int('size')
+        self.crop_ratio = self.options.get_float('crop_ratio')
+        self.direction = self.options.get_string('direction', 'right', decode=True)
 
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
@@ -82,10 +88,10 @@ class Camera(QLabel):
             img = QImage()
             img.loadFromData(data)
 
-            # Take from right - preserving text
-            if img.width() > img.height():
+            if img.width() > img.height() and self.crop_ratio != 0:
                 crop = (img.width() - img.height()) * self.crop_ratio
-                img = ImageManip.crop(img, 0, 0, 0, crop)
+                img = ImageManip.crop_direction(img, crop, self.direction)
+
 
             self.px = QPixmap().fromImage(img)
             self.setFrameSize(self.size)
