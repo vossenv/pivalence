@@ -1,9 +1,9 @@
 import base64
 import json
 import time
+from copy import deepcopy
 
 import requests
-from copy import deepcopy
 from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QLabel, QSizePolicy
@@ -42,39 +42,31 @@ class PiCamGenerator(QThread):
                 self.updateList.emit(self.getCameraList())
                 start = time.time()
 
+    def createCamera(self, name, config):
+        cam = Camera(name, config)
+        self.updateCameras.connect(cam.setImage)
+        return cam
+
 
 class Camera(QLabel):
     def __init__(self,
-                 config,
-                 source=None,
-                 size=300,
                  name="default",
-                 scaled=False,
+                 options=None,
                  parent=None):
 
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
-        self.setScaledContents(scaled)
+        self.setScaledContents(options.get_bool('stretch'))
         self.px = None
         self.name = name
-        self.size = size
-        self.options = deepcopy(config)
-        #
-        # overrides = self.camConfig.get('overrides')
-        # if overrides:
-        #     self.camConfig['overrides'] = {str(k): v for k, v in overrides.items()}
-
+        self.size = options.get_int('size')
+        self.options = deepcopy(options)
+        self.crop_ratio = options.get_float('crop_ratio')
         overrides = self.options.get_dict('overrides')
-        if self.name in overrides:
-           self.options.update(overrides[self.name])
 
-        crop_key = "alarm_ratio" if name in ["2048", "2049"] else "crop_ratio"
-        self.crop_ratio = config.get_float(crop_key, 1)
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
-
-        source.updateCameras.connect(self.setImage)
 
     @pyqtSlot(object, name="size")
     def setFrameSize(self, size):
@@ -94,8 +86,6 @@ class Camera(QLabel):
             if img.width() > img.height():
                 crop = (img.width() - img.height()) * self.crop_ratio
                 img = ImageManip.crop(img, 0, 0, 0, crop)
-
-
 
             self.px = QPixmap().fromImage(img)
             self.setFrameSize(self.size)

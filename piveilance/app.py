@@ -73,27 +73,24 @@ class PiWndow(QMainWindow):
             v = cli_options[o]
             if not v:
                 continue
-            elif v and o in ['stretch', 'fullscreen']:
+            elif v and o in ['fullscreen']:
                 Config.merge_dict(cli, Config.make_dict(['view', o], v))
+            elif v and o in ['stretch']:
+                Config.merge_dict(cli, Config.make_dict(['cameras', o], v))
 
         return cli, configFile
 
     def setCamClass(self):
         self.camClass = self.camConfig.get('type', 'picam')
         if self.camClass == "picam":
-            self.globalCam = Camera
             self.globalGen = PiCamGenerator
-
         elif self.camClass == "dummy":
-            self.globalCam = DummyCamera
             self.globalGen = DummyGenerator
         else:
             raise TypeError("Unknown camera class: " + self.camClass)
 
     def initWindow(self, stylesheet, title, icon):
         self.fullscreen = self.viewConfig.get_bool('fullscreen', False)
-        self.stretch = self.viewConfig.get_bool('stretch', False)
-
         self.widget = QWidget()
         self.resize(1024, 768)
         qr = self.frameGeometry()
@@ -140,7 +137,8 @@ class PiWndow(QMainWindow):
             else:
                 self.showFullScreen()
         elif action == stretchAct:
-            self.stretch = not self.stretch
+            current = self.camConfig.get_bool('stretch', False)
+            self.camConfig['stretch'] = not current
             self.setCameraGrid(adjust=True)
 
     def beginDataFlows(self):
@@ -170,10 +168,10 @@ class PiWndow(QMainWindow):
         # see if there are new column count as calculated by compute
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
-        new_cols, dimensions, camSize = \
+        new_cols, dimensions, self.camConfig['size'] = \
             util.computeGrid(len(self.camlist), width, height)
 
-        if not self.stretch:
+        if not self.camConfig.get_bool('stretch'):
             self.grid.setContentsMargins(*dimensions)
         else:
             self.grid.setContentsMargins(0, 0, 0, 0)
@@ -192,12 +190,10 @@ class PiWndow(QMainWindow):
 
             # add the cameras
             for i, name in enumerate(self.camlist):
-                cam = self.globalCam(self.camConfig, self.generator,
-                                     camSize, name, self.stretch)
-
+                cam = self.generator.createCamera(name, self.camConfig)
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
-        self.setCamSize.emit(camSize)
+        self.setCamSize.emit(self.camConfig['size'])
 
 
 if __name__ == '__main__':
