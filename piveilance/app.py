@@ -134,7 +134,8 @@ class PiWndow(QMainWindow):
 
         for e in entries:
             a = cropMenu.addAction(e)
-            a.name = "crop_" + e
+            a.name = "crop"
+            a.value = e
 
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
         if action == quitAct:
@@ -149,9 +150,8 @@ class PiWndow(QMainWindow):
             self.camConfig['stretch'] = not current
             self.setCameraGrid()
 
-        elif hasattr(action, 'name') and action.name.startswith("crop"):
-            r = float(action.name.split("_")[1])
-            self.camConfig['crop_ratio'] = r
+        elif hasattr(action, 'name') and action.name == "crop":
+            self.camConfig['crop_ratio'] = action.value
             self.setCameraGrid()
 
     def beginDataFlows(self):
