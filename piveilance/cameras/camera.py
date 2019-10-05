@@ -60,6 +60,10 @@ class Camera(QLabel):
         self.name = name
         self.size = size
         self.options = deepcopy(config)
+        #
+        # overrides = self.camConfig.get('overrides')
+        # if overrides:
+        #     self.camConfig['overrides'] = {str(k): v for k, v in overrides.items()}
 
         overrides = self.options.get_dict('overrides')
         if self.name in overrides:

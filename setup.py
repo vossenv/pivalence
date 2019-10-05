@@ -29,6 +29,8 @@ setup(name='piveilance',
       install_requires=[
           'click',
           'requests',
+          'python_dateutil',
+          'click-default-group',
       ],
       extras_require={
           ':sys_platform=="win32"': [
@@ -41,7 +43,7 @@ setup(name='piveilance',
       tests_require=test_deps,
       entry_points={
           'console_scripts': [
-              'piveilance = piveilance.app:main',
+              'piveilance = piveilance.app:cli',
           ]
       },
       )
