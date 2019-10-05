@@ -9,6 +9,10 @@ venv*
 feed.txt
 auth\.txt
 *.exe
-build/
 
+build/
 dist/
+.egg-info/
+.pytest_cache/
+.eggs/
+*egg-info*
