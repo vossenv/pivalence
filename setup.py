@@ -31,6 +31,7 @@ setup(name='piveilance',
           'requests',
           'python_dateutil',
           'click-default-group',
+          'pyyaml'
       ],
       extras_require={
           ':sys_platform=="win32"': [
