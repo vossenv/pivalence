@@ -5,7 +5,7 @@ view:
 cameras:
   max_allowed: 0
   type: picam
-  crop_ratio: 0.4
+  crop_ratio: 0.2
   initial_size: 300
   direction: right
   stretch: false

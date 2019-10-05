@@ -43,6 +43,7 @@ def start(ctx, **kwargs):
 
 class PiWndow(QMainWindow):
     setCamSize = pyqtSignal(object)
+    setCamOptions = pyqtSignal(object)
     resized = pyqtSignal()
 
     def __init__(self, ctx, **cli_options):
@@ -128,6 +129,13 @@ class PiWndow(QMainWindow):
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
 
+        cropMenu = cmenu.addMenu("Crop ratio")
+        entries = [str(float(i / 10)) for i in range(0, 11)]
+
+        for e in entries:
+            a = cropMenu.addAction(e)
+            a.name = "crop_" + e
+
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
         if action == quitAct:
             qApp.quit()
@@ -139,7 +147,12 @@ class PiWndow(QMainWindow):
         elif action == stretchAct:
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current
-            self.setCameraGrid(adjust=True)
+            self.setCameraGrid()
+
+        elif hasattr(action, 'name') and action.name.startswith("crop"):
+            r = float(action.name.split("_")[1])
+            self.camConfig['crop_ratio'] = r
+            self.setCameraGrid()
 
     def beginDataFlows(self):
         self.camlist = []
@@ -192,8 +205,10 @@ class PiWndow(QMainWindow):
             for i, name in enumerate(self.camlist):
                 cam = self.generator.createCamera(name, self.camConfig)
                 self.setCamSize.connect(cam.setFrameSize)
+                self.setCamOptions.connect(cam.setOptions)
                 self.grid.addWidget(cam, *positions[i])
         self.setCamSize.emit(self.camConfig['size'])
+        self.setCamOptions.emit(self.camConfig)
 
 
 if __name__ == '__main__':
