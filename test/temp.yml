@@ -1,0 +1,62 @@
+adobe_users:
+  connectors:
+    umapi:
+      1: connector-umapi.yml
+      2: connector-umap2.yml
+  exclude_adobe_groups: true
+  exclude_identity_types:
+  - adobeID
+  - enterpriseID
+  - dictionary:
+      key1:
+      - a
+      - b
+      key2: x
+  exclude_users: null
+directory_users:
+  connectors:
+    oneroster: connector-oneroster.yml
+  default_country_code: US
+  extension: extension-config.yml
+  group_sync_options:
+    auto_create: true
+    something: false
+    something_else:
+      a new_thing: answer
+  groups:
+  - adobe_groups:
+    - Wizardry
+    directory_group: ELA 6 (6A ELA)
+  - adobe_groups:
+    - Wizardry
+    directory_group: courses::Algebra 2::teachers
+  - adobe_groups:
+    - Wizardry
+    directory_group: schools::ClassLink HS::students
+  user_identity_type: federatedID
+invocation_defaults:
+  adobe_only_user_action: exclude
+  adobe_only_user_list: null
+  adobe_users: all
+  connector: oneroster
+  process_groups: true
+  strategy: sync
+  test_mode: false
+  update_user_info: false
+  user_filter: null
+  users: all
+limits:
+  max_adobe_only_users: 200
+logging:
+  console_log_level: info
+  file_log_directory: ''
+  file_log_level: info
+  file_log_name_format: ust.log
+  log_to_file: true
+  new key:
+    new_k1:
+    - 1
+    - 2
+    new_k2:
+    - 3
+    - 4

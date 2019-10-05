@@ -1,12 +1,14 @@
 import base64
 import json
 import time
+from copy import deepcopy
 
 import requests
 from PyQt5.QtCore import QThread, pyqtSlot, QSize, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
+from piveilance.config import Parser
 from piveilance.util import ImageManip
 
 
@@ -41,31 +43,36 @@ class PiCamGenerator(QThread):
                 self.updateList.emit(self.getCameraList())
                 start = time.time()
 
+    def createCamera(self, name, config):
+        cam = Camera(name, config)
+        self.updateCameras.connect(cam.setImage)
+        return cam
+
 
 class Camera(QLabel):
     def __init__(self,
-                 config,
-                 source=None,
-                 size=300,
                  name="default",
-                 scaled=False,
+                 options=None,
                  parent=None):
 
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
+        self.setScaledContents(options.get_bool('stretch'))
         self.px = None
         self.name = name
-        self.size = size
-        self.crop = 1
-        self.setScaledContents(scaled)
+        self.options = deepcopy(options)
 
-        crop_key = "alarm_ratio" if name in ["2048", "2049"] else "crop_ratio"
-        self.crop_ratio = config.get_float(crop_key, 1)
+        for o, v in self.options.get_dict('overrides').items():
+            if Parser.compare_str(o, name):
+                self.options.update(v)
+
+        self.size = self.options.get_int('size')
+        self.crop_ratio = self.options.get_float('crop_ratio')
+        self.direction = self.options.get_string('direction', 'right', decode=True)
+
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
-
-        source.updateCameras.connect(self.setImage)
 
     @pyqtSlot(object, name="size")
     def setFrameSize(self, size):
@@ -81,11 +88,9 @@ class Camera(QLabel):
             img = QImage()
             img.loadFromData(data)
 
-            # Take from right - preserving text
-            if img.width() > img.height():
+            if img.width() > img.height() and self.crop_ratio != 0:
                 crop = (img.width() - img.height()) * self.crop_ratio
-                img = ImageManip.crop(img, 0, 0, 0, crop)
-
+                img = ImageManip.crop_direction(img, crop, self.direction)
 
 
             self.px = QPixmap().fromImage(img)

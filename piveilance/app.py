@@ -6,6 +6,7 @@ import click
 import math
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from click_default_group import DefaultGroup
 
 from piveilance import util
 from piveilance._version import __version__
@@ -15,14 +16,17 @@ from piveilance.config import *
 from piveilance.resources import get_resource
 
 
-@click.command()
-@click.option('--debug',
-              is_flag=True,
-              default=None)
+@click.group(cls=DefaultGroup, default='start', default_if_no_args=True)
+def cli():
+    pass
+
+
+@cli.command()
+@click.pass_context
 @click.option('-c', '--config',
               help="point to config ini by name",
               type=click.Path(exists=True),
-              default=None)
+              default=None, )
 @click.option('-f', '--fullscreen',
               help="toggle fullscreen",
               is_flag=True,
@@ -31,9 +35,9 @@ from piveilance.resources import get_resource
               help="toggle stretch",
               is_flag=True,
               default=None)
-def main(**kwargs):
+def start(ctx, **kwargs):
     app = QApplication(sys.argv)
-    ex = PiWndow(**kwargs)
+    _ = PiWndow(ctx, **kwargs)
     sys.exit(app.exec_())
 
 
@@ -41,47 +45,52 @@ class PiWndow(QMainWindow):
     setCamSize = pyqtSignal(object)
     resized = pyqtSignal()
 
-    def __init__(self, **options):
+    def __init__(self, ctx, **cli_options):
         super().__init__()
 
         title = "Pi Veilance"
-        default_properties = "config.ini"
         stylesheet = get_resource("styles.qss")
         icon = get_resource("icon.ico")
 
-        if options['config']:
-            props = options['config']
-        else:
-            props = default_properties
-            if not exists(props):
-                shutil.copy(get_resource(props), ".")
+        cliArgs, configFile = self.parseCLIArgs(cli_options)
+        self.config = Config.from_yaml(configFile).merge(cliArgs)
+        self.camConfig = self.config.get_config('cameras')
+        self.viewConfig = self.config.get_config('view')
 
-        self.config = ConfigLoader.load(props)
-        self.cam_config = self.config.get_config('cameras')
-        self.options = options
         self.setCamClass()
         self.beginDataFlows()
         self.initWindow(stylesheet, title, icon)
         self.showFullScreen() if self.fullscreen else self.show()
 
-    def setCamClass(self):
-        self.camClass = self.cam_config.get('type', 'picam')
-        if self.camClass == "picam":
-            self.globalCam = Camera
-            self.globalGen = PiCamGenerator
+    def parseCLIArgs(self, cli_options):
 
+        configFile = cli_options.get('config') or "config.yaml"
+        if not exists(configFile):
+            shutil.copy(get_resource(configFile), ".")
+
+        cli = {}
+        for o in cli_options:
+            v = cli_options[o]
+            if not v:
+                continue
+            elif v and o in ['fullscreen']:
+                Config.merge_dict(cli, Config.make_dict(['view', o], v))
+            elif v and o in ['stretch']:
+                Config.merge_dict(cli, Config.make_dict(['cameras', o], v))
+
+        return cli, configFile
+
+    def setCamClass(self):
+        self.camClass = self.camConfig.get('type', 'picam')
+        if self.camClass == "picam":
+            self.globalGen = PiCamGenerator
         elif self.camClass == "dummy":
-            self.globalCam = DummyCamera
             self.globalGen = DummyGenerator
         else:
             raise TypeError("Unknown camera class: " + self.camClass)
 
     def initWindow(self, stylesheet, title, icon):
-        view_config = self.config.get_config("view")
-        self.fullscreen = (self.options['fullscreen']
-                           or view_config.get_bool('fullscreen', False))
-        self.stretch = (self.options['stretch']
-                        or view_config.get_bool('stretch', False))
+        self.fullscreen = self.viewConfig.get_bool('fullscreen', False)
         self.widget = QWidget()
         self.resize(1024, 768)
         qr = self.frameGeometry()
@@ -128,14 +137,15 @@ class PiWndow(QMainWindow):
             else:
                 self.showFullScreen()
         elif action == stretchAct:
-            self.stretch = not self.stretch
+            current = self.camConfig.get_bool('stretch', False)
+            self.camConfig['stretch'] = not current
             self.setCameraGrid(adjust=True)
 
     def beginDataFlows(self):
         self.camlist = []
         self.cols = 0
-        self.max_cameras = self.cam_config.get_int('max_allowed', 0)
-        self.generator = self.globalGen(self.cam_config)
+        self.max_cameras = self.camConfig.get_int('max_allowed', 0)
+        self.generator = self.globalGen(self.camConfig)
         self.generator.updateList.connect(self.setCameraGrid)
         self.generator.start()
 
@@ -158,10 +168,10 @@ class PiWndow(QMainWindow):
         # see if there are new column count as calculated by compute
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
-        new_cols, dimensions, camSize = \
+        new_cols, dimensions, self.camConfig['size'] = \
             util.computeGrid(len(self.camlist), width, height)
 
-        if not self.stretch:
+        if not self.camConfig.get_bool('stretch'):
             self.grid.setContentsMargins(*dimensions)
         else:
             self.grid.setContentsMargins(0, 0, 0, 0)
@@ -180,13 +190,11 @@ class PiWndow(QMainWindow):
 
             # add the cameras
             for i, name in enumerate(self.camlist):
-                cam = self.globalCam(self.cam_config, self.generator,
-                                     camSize, name, self.stretch)
-
+                cam = self.generator.createCamera(name, self.camConfig)
                 self.setCamSize.connect(cam.setFrameSize)
                 self.grid.addWidget(cam, *positions[i])
-        self.setCamSize.emit(camSize)
+        self.setCamSize.emit(self.camConfig['size'])
 
 
 if __name__ == '__main__':
-    main()
+    cli()

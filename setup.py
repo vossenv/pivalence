@@ -10,6 +10,8 @@ setup_deps = [
           'twine'
       ],
 
+test_deps = ['pytest']
+
 setup(name='piveilance',
       version=__version__,
       description='PiCam Surveilance App',
@@ -27,6 +29,8 @@ setup(name='piveilance',
       install_requires=[
           'click',
           'requests',
+          'python_dateutil',
+          'click-default-group',
       ],
       extras_require={
           ':sys_platform=="win32"': [
@@ -36,9 +40,10 @@ setup(name='piveilance',
           'setup': setup_deps,
       },
       setup_requires=setup_deps,
+      tests_require=test_deps,
       entry_points={
           'console_scripts': [
-              'piveilance = piveilance.app:main',
+              'piveilance = piveilance.app:cli',
           ]
       },
       )

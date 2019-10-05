@@ -1,15 +1,26 @@
-
-
 view:
   fullscreen: false
-  stretch: false
+
 
 cameras:
   max_allowed: 0
   type: picam
-  crop_ratio: 0.55
-  alarm_ratio: 1
+  crop_ratio: 0.4
+  initial_size: 300
+  direction: right
+  stretch: false
   list_url: http://192.168.50.139:9001/camlist
   data_url: http://192.168.50.139:9001/cameras/next
   update_interval: 0.1
   list_refresh: 10
+
+  overrides:
+
+    2048:
+      crop_ratio: 0.8
+      direction: hcenter
+      priority:
+
+    2049:
+      crop_ratio: 0.8
+      direction: hcenter
