@@ -58,7 +58,7 @@ class Camera(QLabel):
         super(Camera, self).__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
-        self.label = QLabel(name)
+        self.label = QLabel()
         self.px = None
         self.name = name
         self.setOptions(options)
@@ -77,6 +77,7 @@ class Camera(QLabel):
 
         self.priority = self.options.get('priority', None)
         self.size = self.options.get_int('size')
+        self.showLabel = self.options.get_bool('labels', True)
         self.font_ratio = self.options.get_float('font_ratio', 0.4)
         self.direction = self.options.get_string('direction', 'right', decode=True)
         self.setScaledContents(self.options.get_bool('stretch'))
@@ -88,6 +89,7 @@ class Camera(QLabel):
             self.setPixmap(self.px.scaled(self.size, self.size))
 
     def setLabel(self):
+        self.label.setText(self.name if self.showLabel else "")
         self.label.setFont(QFont("Arial", self.font_ratio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setStyleSheet("color: #05FF00;"

@@ -129,6 +129,7 @@ class PiWndow(QMainWindow):
         quitAct = cmenu.addAction("Quit")
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
+        labelAct = cmenu.addAction("Toggle labels")
 
         maxMenu = cmenu.addMenu("Max Cams")
         entries = [i for i in range(1, 1 + len(self.camList))]
@@ -156,8 +157,12 @@ class PiWndow(QMainWindow):
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current
             self.redrawGrid()
+        elif action == labelAct:
+            current = self.camConfig.get_bool('labels', True)
+            self.camConfig['labels'] = not current
+            self.redrawGrid()
 
-        if hasattr(action, 'name'):
+        elif hasattr(action, 'name'):
             if action.name == "crop":
                 self.camConfig['crop_ratio'] = action.value
                 self.redrawGrid()

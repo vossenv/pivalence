@@ -31,7 +31,7 @@ sudo tee $dir/startup.sh <<-EOF > /dev/null
 export DISPLAY=:0
 source venv/bin/activate
 pip install --upgrade piveilance
-piveilance
+piveilance -f
 EOF
 
 sudo systemctl daemon-reload
