@@ -1,4 +1,5 @@
 import math
+from PyQt5.QtGui import QPainter, QFont
 
 
 def computeGrid(camCount, width, height):
@@ -11,7 +12,7 @@ def computeGrid(camCount, width, height):
     rheight = max(height - sideLength * rows, 0) / 2
     vheight = max(width - sideLength * cols, 0) / 2
     dimensions = (vheight, rheight, vheight, rheight)
-    return cols, dimensions, sideLength
+    return cols, rows,  dimensions, sideLength
 
 
 def calculateCols(camCount, width, height):
@@ -69,3 +70,14 @@ class ImageManip():
     @classmethod
     def cropCenter(cls, image, size):
         return cls.crop(image, size, size, size, size)
+
+
+    @classmethod
+    def addText(cls, image, text):
+
+        painter = QPainter()
+        painter.begin(image)
+        painter.setFont(font)
+        painter.drawText(position, text)
+        painter.end()
+

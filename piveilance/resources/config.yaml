@@ -13,6 +13,7 @@ cameras:
   data_url: http://192.168.50.139:9001/cameras/next
   update_interval: 0.1
   list_refresh: 10
+  font_ratio: 0.025
 
   overrides:
     living_room:
@@ -26,9 +27,6 @@ cameras:
       priority: 2
 
 
-
-
-
-# 2049: garage
-# 2048: living room
+  # 2049: garage
+  # 2048: living room
   #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'

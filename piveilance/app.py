@@ -4,7 +4,7 @@ import sys
 from os.path import exists
 
 import click
-import math
+from PyQt5.QtCore import QPoint
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
@@ -43,7 +43,6 @@ def start(ctx, **kwargs):
 
 
 class PiWndow(QMainWindow):
-    setCamSize = pyqtSignal(object)
     setCamOptions = pyqtSignal(object)
     resized = pyqtSignal()
 
@@ -63,6 +62,7 @@ class PiWndow(QMainWindow):
         self.beginDataFlows()
         self.initWindow(stylesheet, title, icon)
         self.showFullScreen() if self.fullscreen else self.show()
+
 
     def parseCLIArgs(self, cli_options):
 
@@ -107,7 +107,7 @@ class PiWndow(QMainWindow):
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
-        self.resized.connect(self.setCameraGrid)
+        self.resized.connect(self.redrawGrid)
 
     def resizeEvent(self, event):
         """
@@ -155,21 +155,21 @@ class PiWndow(QMainWindow):
         elif action == stretchAct:
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current
-            self.setCameraGrid()
+            self.redrawGrid()
 
         if hasattr(action, 'name'):
             if action.name == "crop":
                 self.camConfig['crop_ratio'] = action.value
-                self.setCameraGrid()
+                self.redrawGrid()
             elif action.name == "limit":
                 self.camConfig['max_allowed'] = action.value
-                self.setCameraGrid(adjust=True)
+                self.redrawGrid(redrawCams=True)
 
     def beginDataFlows(self):
         self.camList = []
         self.cols = 0
         self.generator = self.globalGen(self.camConfig)
-        self.generator.updateList.connect(self.setCameraGrid)
+        self.generator.updateList.connect(self.redrawGrid)
         self.generator.start()
 
     def computeMaxCams(self):
@@ -177,15 +177,15 @@ class PiWndow(QMainWindow):
             max(self.camConfig.get_int('max_allowed', 0), 0) or len(self.camList)
         return self.camConfig['max_allowed']
 
-    @pyqtSlot(object, name="camgrid")
+    @pyqtSlot(object, name="redraw")
     @pyqtSlot(name="resize")
-    def setCameraGrid(self, camlist=None, adjust=False):
+    def redrawGrid(self, camList=None, redrawCams=False):
 
-        if camlist and not util.areSetsEqual(camlist, self.camList):
-            adjust = True
+        if camList and not util.areSetsEqual(camList, self.camList):
+            redrawCams = True
 
         # Must keep as instance var in case called with none
-        self.camList = camlist or self.camList
+        self.camList = camList or self.camList
 
         if not self.camList:
             return
@@ -194,7 +194,7 @@ class PiWndow(QMainWindow):
         maxCams = self.computeMaxCams()
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
-        newCols, dimensions, self.camConfig['size'] = \
+        newCols, newRows, dimensions, self.camConfig['size'] = \
             util.computeGrid(maxCams, width, height)
 
         if not self.camConfig.get_bool('stretch'):
@@ -203,36 +203,31 @@ class PiWndow(QMainWindow):
             self.grid.setContentsMargins(0, 0, 0, 0)
 
         # Cameras must be repositioned
-        if adjust or newCols != self.cols:
-
-            # calculate new rows and positions
-            self.cols = newCols
-            rows = math.ceil(maxCams / newCols)
-            positions = [(i, j) for i in range(rows) for j in range(newCols)]
+        if redrawCams or newCols != self.cols:
 
             # clear the layout
             for i in reversed(range(self.grid.count())):
                 self.grid.takeAt(i).widget().deleteLater()
 
-            camObjList = self.buildLayout(self.camList, self.camConfig)
-
             # add the cameras
+            # calculate new rows and positions
+            self.cols = newCols
+            positions = [(i, j) for i in range(newRows) for j in range(newCols)]
+            camObjList = self.buildLayout(self.camList, self.camConfig)
             for c in camObjList[0:maxCams]:
-                self.setCamSize.connect(c.setFrameSize)
                 self.setCamOptions.connect(c.setOptions)
-                self.grid.addWidget(c, *positions.pop(0))
+                p = positions.pop(0)
+                self.grid.addWidget(c, *p)
+                self.grid.addWidget(c.label, *p)
 
-        self.setCamSize.emit(self.camConfig['size'])
         self.setCamOptions.emit(self.camConfig)
 
     def buildLayout(self, camList, options):
 
         camList = [self.generator.createCamera(n, options) for n in camList]
-
         fixedCams = sorted([c for c in camList if c.priority], key=lambda x: x.priority)
         freeCams = [c for c in camList if not c.priority]
         random.shuffle(freeCams)
-
         fixedCams.extend(freeCams)
         return fixedCams
 
