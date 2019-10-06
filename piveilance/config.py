@@ -25,7 +25,9 @@ class Config(UserDict):
         val = self.get(name, default)
         if required and not val:
             raise AssertionError("Value for " + name + " required but not given")
-        return Parser.parse_type(val, as_type) if as_type else val
+        if val and as_type:
+            val = Parser.parse_type(val, as_type)
+        return val or default
 
     def get_bool(self, name, default=False, required=False):
         val = self.get_as(name, default, required)

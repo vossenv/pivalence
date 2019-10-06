@@ -69,6 +69,7 @@ class Camera(QLabel):
             if Parser.compare_str(o, self.name):
                 self.options.update(v)
 
+        self.priority = self.options.get('priority', None)
         self.size = self.options.get_int('size')
         self.crop_ratio = self.options.get_float('crop_ratio')
         self.direction = self.options.get_string('direction', 'right', decode=True)

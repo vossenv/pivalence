@@ -15,12 +15,20 @@ cameras:
   list_refresh: 10
 
   overrides:
-
-    2048:
+    living_room:
       crop_ratio: 0.8
       direction: hcenter
-      priority:
+      priority: 1
 
-    2049:
+    garage:
       crop_ratio: 0.8
       direction: hcenter
+      priority: 2
+
+
+
+
+
+# 2049: garage
+# 2048: living room
+  #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'
