@@ -3,6 +3,7 @@ from PyQt5.QtGui import QPainter, QFont
 
 
 def computeGrid(camCount, width, height):
+
     cols, rows, sideLength = calculateCols(camCount, width, height)
     remainder_height = height - sideLength * rows
 
@@ -26,7 +27,8 @@ def calculateCols(camCount, width, height):
         rows = math.ceil(camCount / cols)
         sideLength = width / cols
         if ((height - sideLength * rows) < sideLength
-                and (rows * cols - camCount) <= 1):
+                and (rows * cols - camCount) <= 1
+               or rows > cols):
             break
         cols -= 1
     cols = 1 if cols < 1 else cols

@@ -177,10 +177,7 @@ class PiWndow(QMainWindow):
         self.generator.updateList.connect(self.redrawGrid)
         self.generator.start()
 
-    def computeMaxCams(self):
-        self.camConfig['max_allowed'] = \
-            max(self.camConfig.get_int('max_allowed', 0), 0) or len(self.camList)
-        return self.camConfig['max_allowed']
+
 
     @pyqtSlot(object, name="redraw")
     @pyqtSlot(name="resize")
@@ -196,7 +193,7 @@ class PiWndow(QMainWindow):
             return
 
         # see if there are new column count as calculated by compute
-        maxCams = self.computeMaxCams()
+        maxCams = max(self.camConfig.get_int('max_allowed', 0), 0) or len(self.camList)
         width = self.widget.frameGeometry().width()
         height = self.widget.frameGeometry().height()
         newCols, newRows, dimensions, self.camConfig['size'] = \
