@@ -1,10 +1,19 @@
 view:
   fullscreen: false
 
+layout:
+  max_allowed: 0
+  list_refresh: 10
+  style: flow
+  rows: 2
+  cols: 2
+  positions:
+    living_room: 1,1
+    garage: 1,2
+
 
 cameras:
-  max_allowed: 0
-  type: picam.PiCamGenerator
+  type: picam
   crop_ratio: 0.2
   initial_size: 300
   direction: right
@@ -12,7 +21,6 @@ cameras:
   list_url: http://192.168.50.139:9001/camlist
   data_url: http://192.168.50.139:9001/cameras/next
   update_interval: 0.1
-  list_refresh: 10
   font_ratio: 0.025
   labels: true
 
@@ -20,22 +28,22 @@ cameras:
     living_room:
       crop_ratio: 0.8
       direction: hcenter
-      priority: 1
+    #  position: 1
     garage:
       crop_ratio: 0.8
       direction: hcenter
-      priority: 5
-    front_bottom:
-      priority: 8
-    front_top:
-      priority: 4
-    catpod:
-      priority: 7
-    back_top:
-      priority: 3
-    garage_side:
-      priority:  6
-    back_bottom:
-      priority: 2
+#      position: 5
+#    front_bottom:
+#      position: 8
+#    front_top:
+#      position: 4
+#    catpod:
+#      position: 7
+#    back_top:
+#      position: 3
+#    garage_side:
+#      position:  6
+#    back_bottom:
+#      position: 2
 
   #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'
