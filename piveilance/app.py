@@ -1,19 +1,16 @@
-import random
 import shutil
 import sys
 from os.path import exists
 
 import click
-from PyQt5.QtCore import QPoint
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
 
-from piveilance import util
 from piveilance._version import __version__
-from piveilance.cameras.camera import *
-from piveilance.cameras.dummy import *
 from piveilance.config import *
+from piveilance.layout_manager import LayoutManager
 from piveilance.resources import get_resource
 
 
@@ -57,12 +54,12 @@ class PiWndow(QMainWindow):
         self.config = Config.from_yaml(configFile).merge(cliArgs)
         self.camConfig = self.config.get_config('cameras')
         self.viewConfig = self.config.get_config('view')
+        self.layoutConfig = self.config.get_config('layout')
 
-        self.setCamClass()
-        self.beginDataFlows()
         self.initWindow(stylesheet, title, icon)
+        self.layoutManager = LayoutManager(self.widget, self.grid, self.camConfig, self.layoutConfig)
+        self.resized.connect(self.layoutManager.redrawGrid)
         self.showFullScreen() if self.fullscreen else self.show()
-
 
     def parseCLIArgs(self, cli_options):
 
@@ -82,15 +79,6 @@ class PiWndow(QMainWindow):
 
         return cli, configFile
 
-    def setCamClass(self):
-        self.camClass = self.camConfig.get('type', 'picam')
-        if self.camClass == "picam":
-            self.globalGen = PiCamGenerator
-        elif self.camClass == "dummy":
-            self.globalGen = DummyGenerator
-        else:
-            raise TypeError("Unknown camera class: " + self.camClass)
-
     def initWindow(self, stylesheet, title, icon):
         self.fullscreen = self.viewConfig.get_bool('fullscreen', False)
         self.widget = QWidget()
@@ -107,7 +95,6 @@ class PiWndow(QMainWindow):
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
-        self.resized.connect(self.redrawGrid)
 
     def resizeEvent(self, event):
         """
@@ -125,6 +112,7 @@ class PiWndow(QMainWindow):
         :return:
         """
 
+
         cmenu = QMenu(self)
         quitAct = cmenu.addAction("Quit")
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
@@ -132,7 +120,7 @@ class PiWndow(QMainWindow):
         labelAct = cmenu.addAction("Toggle labels")
 
         maxMenu = cmenu.addMenu("Max Cams")
-        entries = [i for i in range(1, 1 + len(self.camList))]
+        entries = [i for i in range(1, 1 + len(self.layoutManager.camList))]
         for e in entries:
             a = maxMenu.addAction(str(e))
             a.name = "limit"
@@ -156,82 +144,19 @@ class PiWndow(QMainWindow):
         elif action == stretchAct:
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current
-            self.redrawGrid()
+            self.layoutManager.redrawGrid()
         elif action == labelAct:
             current = self.camConfig.get_bool('labels', True)
             self.camConfig['labels'] = not current
-            self.redrawGrid()
+            self.layoutManager.redrawGrid()
 
         elif hasattr(action, 'name'):
             if action.name == "crop":
                 self.camConfig['crop_ratio'] = action.value
-                self.redrawGrid()
+                self.layoutManager.redrawGrid()
             elif action.name == "limit":
                 self.camConfig['max_allowed'] = action.value
-                self.redrawGrid(redrawCams=True)
-
-    def beginDataFlows(self):
-        self.camList = []
-        self.cols = 0
-        self.generator = self.globalGen(self.camConfig)
-        self.generator.updateList.connect(self.redrawGrid)
-        self.generator.start()
-
-
-
-    @pyqtSlot(object, name="redraw")
-    @pyqtSlot(name="resize")
-    def redrawGrid(self, camList=None, redrawCams=False):
-
-        if camList and not util.areSetsEqual(camList, self.camList):
-            redrawCams = True
-
-        # Must keep as instance var in case called with none
-        self.camList = camList or self.camList
-
-        if not self.camList:
-            return
-
-        # see if there are new column count as calculated by compute
-        maxCams = max(self.camConfig.get_int('max_allowed', 0), 0) or len(self.camList)
-        width = self.widget.frameGeometry().width()
-        height = self.widget.frameGeometry().height()
-        newCols, newRows, dimensions, self.camConfig['size'] = \
-            util.computeGrid(maxCams, width, height)
-
-        if not self.camConfig.get_bool('stretch'):
-            self.grid.setContentsMargins(*dimensions)
-        else:
-            self.grid.setContentsMargins(0, 0, 0, 0)
-
-        # Cameras must be repositioned
-        if redrawCams or newCols != self.cols:
-
-            # clear the layout
-            for i in reversed(range(self.grid.count())):
-                self.grid.takeAt(i).widget().deleteLater()
-
-            # add the cameras
-            # calculate new rows and positions
-            self.cols = newCols
-            positions = [(i, j) for i in range(newRows) for j in range(newCols)]
-            camObjList = self.buildLayout(self.camList, self.camConfig)
-            for c in camObjList[0:maxCams]:
-                self.setCamOptions.connect(c.setOptions)
-                p = positions.pop(0)
-                self.grid.addWidget(c, *p)
-                self.grid.addWidget(c.label, *p)
-
-        self.setCamOptions.emit(self.camConfig)
-
-    def buildLayout(self, camList, options):
-
-        camList = [self.generator.createCamera(n, options) for n in camList]
-        fixedCams = sorted([c for c in camList if c.priority], key=lambda x: x.priority)
-        freeCams = [c for c in camList if not c.priority]
-        random.shuffle(freeCams)
-        fixedCams.extend(freeCams)
-        return fixedCams
+                self.layoutManager.redrawGrid(redrawCams=True)
 
 
 if __name__ == '__main__':
