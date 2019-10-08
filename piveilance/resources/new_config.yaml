@@ -12,8 +12,9 @@ layout:
     garage: 1,2
 
 
-cameras:
-  type: picam
+generators:
+  max_allowed: 0
+  type: picam.PiCamGenerator
   crop_ratio: 0.2
   initial_size: 300
   direction: right
@@ -21,6 +22,7 @@ cameras:
   list_url: http://192.168.50.139:9001/camlist
   data_url: http://192.168.50.139:9001/cameras/next
   update_interval: 0.1
+  list_refresh: 10
   font_ratio: 0.025
   labels: true
 
@@ -28,22 +30,22 @@ cameras:
     living_room:
       crop_ratio: 0.8
       direction: hcenter
-    #  position: 1
+      position: 1
     garage:
       crop_ratio: 0.8
       direction: hcenter
-#      position: 5
-#    front_bottom:
-#      position: 8
-#    front_top:
-#      position: 4
-#    catpod:
-#      position: 7
-#    back_top:
-#      position: 3
-#    garage_side:
-#      position:  6
-#    back_bottom:
-#      position: 2
+      position: 5
+    front_bottom:
+      position: 8
+    front_top:
+      position: 4
+    catpod:
+      position: 7
+    back_top:
+      position: 3
+    garage_side:
+      position:  6
+    back_bottom:
+      position: 2
 
   #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'

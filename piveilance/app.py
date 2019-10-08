@@ -52,7 +52,7 @@ class PiWndow(QMainWindow):
 
         cliArgs, configFile = self.parseCLIArgs(cli_options)
         self.config = Config.from_yaml(configFile).merge(cliArgs)
-        self.camConfig = self.config.get_config('cameras')
+        self.camConfig = self.config.get_config('generators')
         self.viewConfig = self.config.get_config('view')
         self.layoutConfig = self.config.get_config('layout')
 

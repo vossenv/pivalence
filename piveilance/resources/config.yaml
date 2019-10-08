@@ -20,22 +20,22 @@ cameras:
     living_room:
       crop_ratio: 0.8
       direction: hcenter
-      priority: 1
+      position: 1
     garage:
       crop_ratio: 0.8
       direction: hcenter
-      priority: 5
+      position: 5
     front_bottom:
-      priority: 8
+      position: 8
     front_top:
-      priority: 4
+      position: 4
     catpod:
-      priority: 7
+      position: 7
     back_top:
-      priority: 3
+      position: 3
     garage_side:
-      priority:  6
+      position:  6
     back_bottom:
-      priority: 2
+      position: 2
 
   #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'

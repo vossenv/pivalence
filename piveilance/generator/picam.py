@@ -1,6 +1,7 @@
 import base64
 import json
 import time
+import random
 from copy import deepcopy
 
 import requests
@@ -13,7 +14,6 @@ from piveilance.util import ImageManip
 
 
 class PiCamGenerator(QThread):
-    updateList = pyqtSignal(object)
     updateCameras = pyqtSignal(object)
 
     def __init__(self, config, parent=None):
@@ -21,7 +21,6 @@ class PiCamGenerator(QThread):
         self.list_url = config.get('list_url')
         self.data_url = config.get('data_url')
         self.sleep = config.get_float('update_interval', 0.1)
-        self.list_refresh = config.get_float('list_refresh', 10)
 
     def getCameraList(self):
         cams = requests.get(self.list_url).content
@@ -34,14 +33,9 @@ class PiCamGenerator(QThread):
         self.updateCameras.emit(camData)
 
     def run(self):
-        start = time.time()
-        self.updateList.emit(self.getCameraList())
         while True:
             self.update()
             time.sleep(self.sleep)
-            if time.time() - start > self.list_refresh:
-                self.updateList.emit(self.getCameraList())
-                start = time.time()
 
     def createCamera(self, name, config):
         cam = Camera(name, config)
@@ -75,7 +69,7 @@ class Camera(QLabel):
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
 
-        self.priority = self.options.get('priority', None)
+        self.position = self.options.get('position', None)
         self.size = self.options.get_int('size')
         self.showLabel = self.options.get_bool('labels', True)
         self.font_ratio = self.options.get_float('font_ratio', 0.4)
@@ -105,6 +99,7 @@ class Camera(QLabel):
                 crop = max((img.width() - img.height()) * self.crop_ratio, 0)
                 img = ImageManip.crop_direction(img, crop, self.direction)
 
+            time.sleep(0.005*random.randint(0, 1))
             self.px = QPixmap().fromImage(img)
             self.setFrameSize()
 
