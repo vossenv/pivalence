@@ -71,4 +71,13 @@ class FixedLayout():
             self.grid.addWidget(c, *p)
             self.grid.addWidget(c.label, *p)
             camsOutput.append(c)
+        if len(positions) > 0:
+            for p in positions:
+                c = self.createCamera("none", options)
+                c.name = "none"
+                c.setLabel()
+                #self.grid.addWidget(c, *p)
+                self.grid.addWidget(c.label, *p)
+
+
         return camsOutput
