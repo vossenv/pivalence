@@ -10,7 +10,7 @@ from click_default_group import DefaultGroup
 
 from piveilance._version import __version__
 from piveilance.config import *
-from piveilance.layout_manager import LayoutManager
+from piveilance.layoutManager import LayoutManager
 from piveilance.resources import get_resource
 
 
