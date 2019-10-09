@@ -5,11 +5,7 @@ import math
 
 class FlowLayout():
 
-    def __init__(self, grid, createCamera, layoutConfig):
-        super(FlowLayout).__init__()
-        self.grid = grid
-        self.createCamera = createCamera
-
+    @classmethod
     def calculateProperties(self, width, height, camCount=None):
 
         """
@@ -29,8 +25,9 @@ class FlowLayout():
         cols = 1 if cols < 1 else cols
         return rows, cols, sideLength
 
-    def buildLayout(self, camList, options, rows, cols, maxCams):
-        camList = [self.createCamera(n, options) for n in camList]
+    @classmethod
+    def buildLayout(self, camList, rows, cols):
+
         fixedCams = sorted([c for c in camList if c.position], key=lambda x: x.position)
         freeCams = [c for c in camList if not c.position]
         random.shuffle(freeCams)
@@ -38,10 +35,9 @@ class FlowLayout():
 
         camsOutput = []
         positions = [(i, j) for i in range(rows) for j in range(cols)]
-        for c in fixedCams[0:maxCams]:
+        for c in fixedCams:
             p = positions.pop(0)
-            self.grid.addWidget(c, *p)
-            self.grid.addWidget(c.label, *p)
+            c.position = p
             camsOutput.append(c)
         return camsOutput
 
@@ -56,28 +52,29 @@ class FixedLayout():
         self.rows = self.layoutConfig.get_int('rows', 2)
         self.cols = self.layoutConfig.get_int('cols', 3)
 
+    @classmethod
     def calculateProperties(self, width, height, camCount=None):
-        sideLength = min(width/self.cols, height/self.rows)
+        sideLength = min(width / self.cols, height / self.rows)
         return self.rows, self.cols, sideLength
 
-
+    @classmethod
     def buildLayout(self, camList, options, rows, cols, maxCams):
         camList = [self.createCamera(n, options) for n in camList]
-        maxCams = rows*cols
+        maxCams = rows * cols
         camsOutput = []
         positions = [(i, j) for i in range(rows) for j in range(cols)]
         for c in camList[0:maxCams]:
             p = positions.pop(0)
-            self.grid.addWidget(c, *p)
-            self.grid.addWidget(c.label, *p)
+            c.position = p
             camsOutput.append(c)
-        if len(positions) > 0:
-            for p in positions:
-                c = self.createCamera("none", options)
-                c.name = "none"
-                c.setLabel()
-                #self.grid.addWidget(c, *p)
-                self.grid.addWidget(c.label, *p)
+        return camsOutput
 
+        # if len(positions) > 0:
+        #     for p in positions:
+        #         c = self.createCamera("none", options)
+        #         c.name = "none"
+        #         c.setLabel()
+        #         #self.grid.addWidget(c, *p)
+        #         self.grid.addWidget(c.label, *p)
 
         return camsOutput

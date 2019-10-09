@@ -18,6 +18,7 @@ class LayoutManager(QObject):
         self.layoutConfig = layoutConfig
         self.style = layoutConfig.get('style', 'flow')
         self.list_refresh = layoutConfig.get_float('list_refresh', 10)
+        self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
 
         path = self.camConfig.get('type', 'picam.PiCamGenerator').split(".")
         module = __import__('piveilance.generator.' + path[0], fromlist=[''])
@@ -26,9 +27,11 @@ class LayoutManager(QObject):
         self.generator = gen_class(self.camConfig)
 
         if self.style == 'fixed':
-            self.layout = FixedLayout(self.grid, self.generator.createCamera, self.layoutConfig)
+            # self.layout = FixedLayout(self.grid, self.generator.createCamera, self.layoutConfig)
+            self.layout = FixedLayout
         else:
-            self.layout = FlowLayout(self.grid, self.generator.createCamera, self.layoutConfig)
+            self.layout = FlowLayout
+            # self.layout = FlowLayout(self.grid, self.generator.createCamera, self.layoutConfig)
 
         self.cols = 0
         self.camList = self.generator.getCameraList()
@@ -49,26 +52,30 @@ class LayoutManager(QObject):
         if not self.camList:
             return
 
-        maxCams = self.getMaxCams()
-        width = self.widget.frameGeometry().width()
-        height = self.widget.frameGeometry().height()
-        rows, cols, sideLength = self.layout.calculateProperties(width, height, maxCams)
+        numCams = self.maxCams if self.maxCams else len(self.camList)
+        width, height = self.get_window_size()
+        rows, cols, sideLength = self.layout.calculateProperties(width, height, numCams)
         self.setContentMargin(rows, cols, width, height, sideLength)
         self.camConfig['size'] = sideLength
+
+        camObjList = [self.generator.createCamera(n, self.camConfig) for n in self.camList]
 
         # Cameras must be repositioned
         if redrawCams or cols != self.cols:
             self.clearLayout()
-            cams = self.layout.buildLayout(self.camList, self.camConfig, rows, cols, maxCams)
+            cams = self.layout.buildLayout(camObjList[0:numCams], rows, cols)
             for c in cams:
+                self.grid.addWidget(c, *c.position)
+                self.grid.addWidget(c.label, *c.position)
                 self.setCamOptions.connect(c.setOptions)
 
         self.cols = cols
         self.setCamOptions.emit(self.camConfig)
 
-    def getMaxCams(self):
-        # return either the config setting or the number of cams
-        return max(self.camConfig.get_int('max_allowed', 0), 0) or len(self.camList)
+    def get_window_size(self):
+        width = self.widget.frameGeometry().width()
+        height = self.widget.frameGeometry().height()
+        return width, height
 
     def clearLayout(self):
         # clear the layout

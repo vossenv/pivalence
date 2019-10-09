@@ -4,16 +4,15 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: fixed
-  rows: 10
-  cols: 10
+  style: flow
+  rows: 3
+  cols: 3
   positions:
     living_room: 1,1
     garage: 1,2
 
 
 generators:
-  max_allowed: 0
   type: picam.PiCamGenerator
   crop_ratio: 0.2
   initial_size: 300
