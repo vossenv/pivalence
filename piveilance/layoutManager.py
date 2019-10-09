@@ -55,7 +55,8 @@ class LayoutManager(QObject):
         numCams = self.maxCams if self.maxCams else len(self.camList)
         width, height = self.get_window_size()
         rows, cols, sideLength = self.layout.calculateProperties(width, height, numCams)
-        self.setContentMargin(rows, cols, width, height, sideLength)
+        dimensions, sideLength = self.computeDims(rows, cols, width, height, sideLength)
+        self.setContentMargin(dimensions)
         self.camConfig['size'] = sideLength
 
         camObjList = [self.generator.createCamera(n, self.camConfig) for n in self.camList]
@@ -82,9 +83,8 @@ class LayoutManager(QObject):
         for i in reversed(range(self.grid.count())):
             self.grid.takeAt(i).widget().deleteLater()
 
-    def setContentMargin(self, rows, cols, width, height, sideLength):
+    def setContentMargin(self, dimensions):
         if not self.camConfig.get_bool('stretch'):
-            dimensions = self.computeDims(rows, cols, width, height, sideLength)
             self.grid.setContentsMargins(*dimensions)
         else:
             self.grid.setContentsMargins(0, 0, 0, 0)
@@ -96,7 +96,7 @@ class LayoutManager(QObject):
         rheight = max(height - sideLength * rows, 0) / 2
         vheight = max(width - sideLength * cols, 0) / 2
         dimensions = (vheight, rheight, vheight, rheight)
-        return dimensions
+        return dimensions, sideLength
 
 
 class LayoutMonitor(QThread):
