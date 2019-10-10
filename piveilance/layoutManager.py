@@ -1,6 +1,6 @@
 import time
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
 from piveilance.layout import FixedLayout, FlowLayout
 from piveilance.util import *
@@ -25,90 +25,116 @@ class LayoutManager(QObject):
         gen_class = getattr(module, path[-1])
 
         self.generator = gen_class(self.camConfig)
-
-        if self.style == 'fixed':
-            # self.layout = FixedLayout(self.grid, self.generator.createCamera, self.layoutConfig)
-            self.layout = FixedLayout
-        else:
-            self.layout = FlowLayout
-            # self.layout = FlowLayout(self.grid, self.generator.createCamera, self.layoutConfig)
-
-        self.cols = 0
-        self.camList = self.generator.getCameraList()
-        self.redrawGrid()
+        self.generator.updateCameras.connect(self.recieveData)
+        self.layout = FixedLayout if self.style == 'fixed' else FlowLayout
+        self.camList = []
+        self.geom = Geometry(cols=0)
+        self.start_time = time.time()
         self.generator.start()
-        self.layoutMonitor = LayoutMonitor(self)
-        self.layoutMonitor.start()
+
 
     @pyqtSlot(name="resize")
-    def redrawGrid(self, camList=None, redrawCams=False):
+    def resizeEventHandler(self, triggerRedraw=False):
+        self.arrange(triggerRedraw)
 
-        if camList and not areSetsEqual(camList, self.camList):
-            redrawCams = True
+    @pyqtSlot(object, name="data")
+    def recieveData(self, data, triggerRedraw=False):
 
-        # Must keep as instance var in case called with none
-        self.camList = camList or self.camList
+        # if lists are not eqal
+        # if time has elapsed
+        # if camlist is empty
+
+        camList = list(data.keys())
+
+        if not camList:
+            return
+        elif not self.camList:
+            triggerRedraw = True
+        elif not areSetsEqual(camList, self.camList):
+            triggerRedraw = True
+        elif time.time() - self.start_time > self.list_refresh:
+            triggerRedraw = True
+            self.start_time = time.time()
+
+        self.camList = camList
+
+        if triggerRedraw:
+            self.arrange(True)
+
+    def arrange(self, triggerRedraw=False):
 
         if not self.camList:
             return
 
-        numCams = self.maxCams if self.maxCams else len(self.camList)
-        width, height = self.get_window_size()
-        rows, cols, sideLength = self.layout.calculateProperties(width, height, numCams)
-        dimensions, sideLength = self.computeDims(rows, cols, width, height, sideLength)
-        self.setContentMargin(dimensions)
-        self.camConfig['size'] = sideLength
-
-        camObjList = [self.generator.createCamera(n, self.camConfig) for n in self.camList]
+        g = self.getLayoutGeometry()
+        self.camConfig['size'] = g.frameSize
+        self.setContentMargin(g.margins)
 
         # Cameras must be repositioned
-        if redrawCams or cols != self.cols:
+        if triggerRedraw or g.cols != self.geom.cols:
+            camObjList = [self.generator.createCamera(n, self.camConfig) for n in self.camList]
+            cams = self.layout.buildLayout(camObjList[0:g.numCams], g.rows, g.cols)
             self.clearLayout()
-            cams = self.layout.buildLayout(camObjList[0:numCams], rows, cols)
             for c in cams:
                 self.grid.addWidget(c, *c.position)
                 self.grid.addWidget(c.label, *c.position)
                 self.setCamOptions.connect(c.setOptions)
 
-        self.cols = cols
+        self.geom = g
         self.setCamOptions.emit(self.camConfig)
 
-    def get_window_size(self):
-        width = self.widget.frameGeometry().width()
-        height = self.widget.frameGeometry().height()
-        return width, height
-
     def clearLayout(self):
-        # clear the layout
         for i in reversed(range(self.grid.count())):
             self.grid.takeAt(i).widget().deleteLater()
 
-    def setContentMargin(self, dimensions):
-        if not self.camConfig.get_bool('stretch'):
-            self.grid.setContentsMargins(*dimensions)
-        else:
-            self.grid.setContentsMargins(0, 0, 0, 0)
+    def setContentMargin(self, margins):
+        m = margins if not self.camConfig.get_bool('stretch') else (0, 0, 0, 0)
+        self.grid.setContentsMargins(*m)
 
-    def computeDims(self, rows, cols, width, height, sideLength):
-        remainder_height = height - sideLength * rows
+    def getLayoutGeometry(self):
+
+        n = self.maxCams if self.maxCams else len(self.camList)
+        w = self.widget.frameGeometry().width()
+        h = self.widget.frameGeometry().height()
+        g = Geometry(width=w, height=h, numCams=n)
+        g.update(self.layout.calculate(w, h, n))
+        g.calculateAllProperties()
+        return g
+
+class Geometry():
+
+    def __init__(self,
+                 rows=None,
+                 cols=None,
+                 numCams=None,
+                 height=None,
+                 width=None,
+                 frameSize=None,
+                 margins=None):
+
+        self.rows = rows
+        self.cols = cols
+        self.numCams = numCams
+        self.height = height
+        self.width = width
+        self.frameSize = frameSize
+        self.margins = margins
+
+    def correctFrameSize(self):
+        remainder_height = self.height - self.frameSize * self.rows
         if remainder_height < 0:
-            sideLength = sideLength - abs(remainder_height / rows)
-        rheight = max(height - sideLength * rows, 0) / 2
-        vheight = max(width - sideLength * cols, 0) / 2
-        dimensions = (vheight, rheight, vheight, rheight)
-        return dimensions, sideLength
+            self.frameSize = self.frameSize - abs(remainder_height / self.rows)
 
+    def setMargins(self):
+        rheight = max(self.height - self.frameSize * self.rows, 0) / 2
+        vheight = max(self.width - self.frameSize * self.cols, 0) / 2
+        self.margins = (vheight, rheight, vheight, rheight)
 
-class LayoutMonitor(QThread):
+    def calculateAllProperties(self):
+        self.correctFrameSize()
+        self.setMargins()
 
-    def __init__(self, layoutManager, parent=None):
-        super(LayoutMonitor, self).__init__(parent)
-        self.lm = layoutManager
-
-    def run(self):
-        start = time.time()
-        while True:
-            if time.time() - start > self.lm.list_refresh:
-                self.lm.camList = self.lm.generator.getCameraList()
-                start = time.time()
-            time.sleep(1)
+    def update(self, values):
+        for k, v in values.items():
+            if v is not None:
+                self.__setattr__(k, v)

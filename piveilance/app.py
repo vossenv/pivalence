@@ -58,7 +58,7 @@ class PiWndow(QMainWindow):
 
         self.initWindow(stylesheet, title, icon)
         self.layoutManager = LayoutManager(self.widget, self.grid, self.camConfig, self.layoutConfig)
-        self.resized.connect(self.layoutManager.redrawGrid)
+        self.resized.connect(self.layoutManager.resizeEventHandler)
         self.showFullScreen() if self.fullscreen else self.show()
 
     def parseCLIArgs(self, cli_options):
@@ -121,6 +121,7 @@ class PiWndow(QMainWindow):
 
         maxMenu = cmenu.addMenu("Max Cams")
         entries = [i for i in range(1, 1 + len(self.layoutManager.camList))]
+        entries.append("Unlimited")
         for e in entries:
             a = maxMenu.addAction(str(e))
             a.name = "limit"
@@ -144,19 +145,20 @@ class PiWndow(QMainWindow):
         elif action == stretchAct:
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current
-            self.layoutManager.redrawGrid()
+            self.layoutManager.arrange()
         elif action == labelAct:
             current = self.camConfig.get_bool('labels', True)
             self.camConfig['labels'] = not current
-            self.layoutManager.redrawGrid()
+            self.layoutManager.arrange()
 
         elif hasattr(action, 'name'):
             if action.name == "crop":
                 self.camConfig['crop_ratio'] = action.value
-                self.layoutManager.redrawGrid()
+                self.layoutManager.arrange()
             elif action.name == "limit":
-                self.camConfig['max_allowed'] = action.value
-                self.layoutManager.redrawGrid(redrawCams=True)
+                v = action.value
+                self.layoutManager.maxCams = 0 if v == "Unlimited" else v
+                self.layoutManager.arrange(triggerRedraw=True)
 
 
 if __name__ == '__main__':

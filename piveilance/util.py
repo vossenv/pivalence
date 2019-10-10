@@ -43,13 +43,13 @@ class ImageManip():
     def cropCenter(cls, image, size):
         return cls.crop(image, size, size, size, size)
 
-
-    @classmethod
-    def addText(cls, image, text):
-
-        painter = QPainter()
-        painter.begin(image)
-        painter.setFont(font)
-        painter.drawText(position, text)
-        painter.end()
-
+    #
+    # @classmethod
+    # def addText(cls, image, text):
+    #
+    #     painter = QPainter()
+    #     painter.begin(image)
+    #     painter.setFont(font)
+    #     painter.drawText(position, text)
+    #     painter.end()
+    #

@@ -3,27 +3,31 @@ import random
 import math
 
 
+
+
 class FlowLayout():
 
     @classmethod
-    def calculateProperties(self, width, height, camCount=None):
+    def calculate(self, width, height, camCount=None):
 
         """
         # Iterative computation to determine actual cols
 
         """
         # Start by initial guess that ncols = ncams
-        cols = rows = sideLength = camCount
+        cols = rows = frameSize = camCount
         while (cols > 0):
             rows = math.ceil(camCount / cols)
-            sideLength = width / cols
-            if ((height - sideLength * rows) < sideLength
+            frameSize = width / cols
+            if ((height - frameSize * rows) < frameSize
                     and (rows * cols - camCount) <= 1
                     or rows > cols):
                 break
             cols -= 1
         cols = 1 if cols < 1 else cols
-        return rows, cols, sideLength
+
+        return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
+
 
     @classmethod
     def buildLayout(self, camList, rows, cols):
@@ -78,3 +82,7 @@ class FixedLayout():
         #         self.grid.addWidget(c.label, *p)
 
         return camsOutput
+
+
+
+

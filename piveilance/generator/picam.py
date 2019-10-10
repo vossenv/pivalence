@@ -1,7 +1,7 @@
 import base64
 import json
-import time
 import random
+import time
 from copy import deepcopy
 
 import requests
@@ -18,13 +18,8 @@ class PiCamGenerator(QThread):
 
     def __init__(self, config, parent=None):
         super(PiCamGenerator, self).__init__(parent)
-        self.list_url = config.get('list_url')
         self.data_url = config.get('data_url')
         self.sleep = config.get_float('update_interval', 0.1)
-
-    def getCameraList(self):
-        cams = requests.get(self.list_url).content
-        return json.loads(cams)
 
     def update(self):
         img = requests.get(self.data_url)
@@ -99,7 +94,7 @@ class Camera(QLabel):
                 crop = max((img.width() - img.height()) * self.crop_ratio, 0)
                 img = ImageManip.crop_direction(img, crop, self.direction)
 
-            time.sleep(0.005*random.randint(0, 1))
+            time.sleep(0.005 * random.randint(0, 1))
             self.px = QPixmap().fromImage(img)
             self.setFrameSize()
 
