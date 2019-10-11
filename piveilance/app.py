@@ -8,6 +8,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
 
+from piveilance import layout
 from piveilance._version import __version__
 from piveilance.config import *
 from piveilance.layoutManager import LayoutManager
@@ -120,7 +121,10 @@ class PiWndow(QMainWindow):
         labelAct = cmenu.addAction("Toggle labels")
 
         maxMenu = cmenu.addMenu("Max Cams")
-        entries = [i for i in range(1, 1 + len(self.layoutManager.camList))]
+
+        entries = []
+        if self.layoutManager.layout == layout.FlowLayout:
+            entries.extend([i for i in range(1, 1 + len(self.layoutManager.camList))])
         entries.append("Unlimited")
         for e in entries:
             a = maxMenu.addAction(str(e))

@@ -165,10 +165,10 @@ class Parser():
         return Parser.parse_collection(value, dict)
 
     @staticmethod
-    def parse_collection(value, as_type):
+    def parse_collection(value, as_type=None):
         if value is None:
             return as_type()
-        elif isinstance(value, as_type):
+        elif as_type and isinstance(value, as_type):
             return value
         else:
             try:
@@ -183,7 +183,7 @@ class Parser():
                 return ast.literal_eval(value)
             except:
                 pass
-        return as_type(value)
+        return as_type(value) if as_type else value
 
     @staticmethod
     def parse_time_delta(value):

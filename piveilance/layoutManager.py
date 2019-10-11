@@ -18,6 +18,7 @@ class LayoutManager(QObject):
         self.widget = widget
         self.grid = grid
         self.camConfig = camConfig
+        self.layoutConfig = layoutConfig
         self.list_refresh = layoutConfig.get_float('list_refresh', 10)
         self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
 
@@ -26,10 +27,14 @@ class LayoutManager(QObject):
         gen_class = getattr(module, path[-1])
         style = layoutConfig.get('style', 'flow')
 
-        self.layout = FixedLayout if style == 'fixed' else FlowLayout
+        self.setLayout(FixedLayout if style == 'fixed' else FlowLayout)
         self.generator = gen_class(self.camConfig)
         self.generator.updateCameras.connect(self.recieveData)
         self.generator.start()
+
+    def setLayout(self, layout):
+        self.layout = layout
+        self.layout.config = self.layoutConfig
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
@@ -38,22 +43,23 @@ class LayoutManager(QObject):
     @pyqtSlot(object, name="data")
     def recieveData(self, data, triggerRedraw=False):
 
-        camList = list(data.keys())
+        delta = time.time() - self.start_time
 
-        if not camList:
-            return
-        elif not self.camList:
-            triggerRedraw = True
-        elif not areSetsEqual(camList, self.camList):
-            triggerRedraw = True
-        elif time.time() - self.start_time > self.list_refresh:
-            triggerRedraw = True
+        if not self.camList or delta > self.list_refresh:
+            camList = list(data.keys())
+
+            if not camList:
+                return
+            elif not self.camList:
+                triggerRedraw = True
+            elif not areSetsEqual(camList, self.camList):
+                triggerRedraw = True
+
+            self.camList = camList
             self.start_time = time.time()
 
-        self.camList = camList
-
-        if triggerRedraw:
-            self.arrange(True)
+            if triggerRedraw:
+                self.arrange(True)
 
     def arrange(self, triggerRedraw=False):
         startCols = self.g.cols
@@ -63,7 +69,7 @@ class LayoutManager(QObject):
         self.updateWindowGeometry()
 
         if triggerRedraw or self.g.cols != startCols:
-
+            print(triggerRedraw)
             self.clearLayout()
             cams = [self.generator.createCamera(n)
                     for n in self.camList[0:self.g.numCams]]
@@ -92,6 +98,7 @@ class LayoutManager(QObject):
         WindowGeometry.calculateAllProperties()
         self.camConfig['size'] = self.g.frameSize
         self.setContentMargin(WindowGeometry.margins)
+
 
 class WindowGeometry():
     rows = None

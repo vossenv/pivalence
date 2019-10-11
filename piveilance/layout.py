@@ -2,13 +2,13 @@ import random
 
 import math
 
-
+from piveilance.config import Parser
 
 
 class FlowLayout():
 
     @classmethod
-    def calculate(self, width, height, camCount=None):
+    def calculate(cls, width, height, camCount=None):
 
         """
         # Iterative computation to determine actual cols
@@ -28,9 +28,8 @@ class FlowLayout():
 
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
-
     @classmethod
-    def buildLayout(self, camList, rows, cols):
+    def buildLayout(cls, camList, rows, cols):
 
         fixedCams = sorted([c for c in camList if c.position], key=lambda x: x.position)
         freeCams = [c for c in camList if not c.position]
@@ -47,42 +46,45 @@ class FlowLayout():
 
 
 class FixedLayout():
-
-    def __init__(self, grid, createCamera, layoutConfig):
-        super(FixedLayout).__init__()
-        self.grid = grid
-        self.createCamera = createCamera
-        self.layoutConfig = layoutConfig
-        self.rows = self.layoutConfig.get_int('rows', 2)
-        self.cols = self.layoutConfig.get_int('cols', 3)
+    config = None
 
     @classmethod
-    def calculateProperties(self, width, height, camCount=None):
-        sideLength = min(width / self.cols, height / self.rows)
-        return self.rows, self.cols, sideLength
+    def calculate(cls, width, height, *args):
+        cols = cls.config.get_int('cols')
+        rows = cls.config.get_int('rows')
+        frameSize = min(width / cols, height / rows)
+
+        return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
-    def buildLayout(self, camList, options, rows, cols, maxCams):
-        camList = [self.createCamera(n, options) for n in camList]
-        maxCams = rows * cols
-        camsOutput = []
-        positions = [(i, j) for i in range(rows) for j in range(cols)]
-        for c in camList[0:maxCams]:
-            p = positions.pop(0)
-            c.position = p
-            camsOutput.append(c)
-        return camsOutput
+    def correctCoordinates(cls, coords):
+        return (coords[0] - 1, coords[1] - 1)
 
-        # if len(positions) > 0:
-        #     for p in positions:
-        #         c = self.createCamera("none", options)
-        #         c.name = "none"
-        #         c.setLabel()
-        #         #self.grid.addWidget(c, *p)
-        #         self.grid.addWidget(c.label, *p)
+    @classmethod
+    def buildLayout(cls, camList, *args):
 
-        return camsOutput
+        cols = cls.config.get_int('cols')
+        rows = cls.config.get_int('rows')
 
+        grid = set((i, j) for i in range(rows) for j in range(cols))
+        pos = (cls.config.get_dict('positions') or {}).copy()
 
+        fixed = []
+        floating = []
 
+        pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
+        pos.update({k: cls.correctCoordinates(v) for k, v in pos.items()})
 
+        for c in camList:
+            c.position = pos.get(c.name)
+            if c.position and c.position in grid:
+                fixed.append(c)
+                grid.remove(c.position)
+            else:
+                floating.append(c)
+
+        for c in floating:
+            if grid:
+                c.position = grid.pop()
+                fixed.append(c)
+        return fixed
