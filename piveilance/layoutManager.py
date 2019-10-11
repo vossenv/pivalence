@@ -65,7 +65,7 @@ class LayoutManager(QObject):
         if triggerRedraw or self.g.cols != startCols:
 
             self.clearLayout()
-            cams = [self.generator.createCamera(n, self.camConfig)
+            cams = [self.generator.createCamera(n)
                     for n in self.camList[0:self.g.numCams]]
 
             for c in self.layout.buildLayout(cams, self.g.rows, self.g.cols):

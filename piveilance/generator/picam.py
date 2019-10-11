@@ -18,6 +18,7 @@ class PiCamGenerator(QThread):
 
     def __init__(self, config, parent=None):
         super(PiCamGenerator, self).__init__(parent)
+        self.camConfig = config
         self.data_url = config.get('data_url')
         self.sleep = config.get_float('update_interval', 0.1)
 
@@ -32,8 +33,8 @@ class PiCamGenerator(QThread):
             self.update()
             time.sleep(self.sleep)
 
-    def createCamera(self, name, config):
-        cam = Camera(name, config)
+    def createCamera(self, name):
+        cam = Camera(name, self.camConfig)
         self.updateCameras.connect(cam.setImage)
         return cam
 
