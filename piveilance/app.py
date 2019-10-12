@@ -8,9 +8,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
 
+from piveilance import layout
 from piveilance._version import __version__
 from piveilance.config import *
-from piveilance.layout_manager import LayoutManager
+from piveilance.layoutManager import LayoutManager
 from piveilance.resources import get_resource
 
 
@@ -52,13 +53,13 @@ class PiWndow(QMainWindow):
 
         cliArgs, configFile = self.parseCLIArgs(cli_options)
         self.config = Config.from_yaml(configFile).merge(cliArgs)
-        self.camConfig = self.config.get_config('cameras')
+        self.camConfig = self.config.get_config('generators')
         self.viewConfig = self.config.get_config('view')
         self.layoutConfig = self.config.get_config('layout')
 
         self.initWindow(stylesheet, title, icon)
         self.layoutManager = LayoutManager(self.widget, self.grid, self.camConfig, self.layoutConfig)
-        self.resized.connect(self.layoutManager.redrawGrid)
+        self.resized.connect(self.layoutManager.resizeEventHandler)
         self.showFullScreen() if self.fullscreen else self.show()
 
     def parseCLIArgs(self, cli_options):
@@ -119,8 +120,16 @@ class PiWndow(QMainWindow):
         stretchAct = cmenu.addAction("Toggle stretch")
         labelAct = cmenu.addAction("Toggle labels")
 
+        layoutMenu = cmenu.addMenu("Layout")
+        flowAct = layoutMenu.addAction("Flow")
+        fixedAct = layoutMenu.addAction("Fixed")
+
+
         maxMenu = cmenu.addMenu("Max Cams")
-        entries = [i for i in range(1, 1 + len(self.layoutManager.camList))]
+        entries = []
+        if self.layoutManager.layout == layout.FlowLayout:
+            entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
+        entries.append("Unlimited")
         for e in entries:
             a = maxMenu.addAction(str(e))
             a.name = "limit"
@@ -134,6 +143,7 @@ class PiWndow(QMainWindow):
             a.value = e
 
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
+
         if action == quitAct:
             qApp.quit()
         elif action == fullScreenAct:
@@ -141,22 +151,31 @@ class PiWndow(QMainWindow):
                 self.showNormal()
             else:
                 self.showFullScreen()
+
+        elif action == flowAct and self.layoutManager.layout != layout.FlowLayout:
+            self.layoutManager.setLayout(layout.FlowLayout)
+            self.layoutManager.arrange(triggerRedraw=True)
+        elif action == fixedAct and self.layoutManager.layout != layout.FixedLayout:
+            self.layoutManager.setLayout(layout.FixedLayout)
+            self.layoutManager.arrange(triggerRedraw=True)
+
         elif action == stretchAct:
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current
-            self.layoutManager.redrawGrid()
+            self.layoutManager.arrange()
         elif action == labelAct:
             current = self.camConfig.get_bool('labels', True)
             self.camConfig['labels'] = not current
-            self.layoutManager.redrawGrid()
+            self.layoutManager.arrange()
 
         elif hasattr(action, 'name'):
             if action.name == "crop":
                 self.camConfig['crop_ratio'] = action.value
-                self.layoutManager.redrawGrid()
+                self.layoutManager.arrange()
             elif action.name == "limit":
-                self.camConfig['max_allowed'] = action.value
-                self.layoutManager.redrawGrid(redrawCams=True)
+                v = action.value
+                self.layoutManager.maxCams = 0 if v == "Unlimited" else v
+                self.layoutManager.arrange(triggerRedraw=True)
 
 
 if __name__ == '__main__':
