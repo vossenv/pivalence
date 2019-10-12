@@ -120,11 +120,15 @@ class PiWndow(QMainWindow):
         stretchAct = cmenu.addAction("Toggle stretch")
         labelAct = cmenu.addAction("Toggle labels")
 
-        maxMenu = cmenu.addMenu("Max Cams")
+        layoutMenu = cmenu.addMenu("Layout")
+        flowAct = layoutMenu.addAction("Flow")
+        fixedAct = layoutMenu.addAction("Fixed")
 
+
+        maxMenu = cmenu.addMenu("Max Cams")
         entries = []
         if self.layoutManager.layout == layout.FlowLayout:
-            entries.extend([i for i in range(1, 1 + len(self.layoutManager.camList))])
+            entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
         entries.append("Unlimited")
         for e in entries:
             a = maxMenu.addAction(str(e))
@@ -139,6 +143,7 @@ class PiWndow(QMainWindow):
             a.value = e
 
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
+
         if action == quitAct:
             qApp.quit()
         elif action == fullScreenAct:
@@ -146,6 +151,14 @@ class PiWndow(QMainWindow):
                 self.showNormal()
             else:
                 self.showFullScreen()
+
+        elif action == flowAct and self.layoutManager.layout != layout.FlowLayout:
+            self.layoutManager.setLayout(layout.FlowLayout)
+            self.layoutManager.arrange(triggerRedraw=True)
+        elif action == fixedAct and self.layoutManager.layout != layout.FixedLayout:
+            self.layoutManager.setLayout(layout.FixedLayout)
+            self.layoutManager.arrange(triggerRedraw=True)
+
         elif action == stretchAct:
             current = self.camConfig.get_bool('stretch', False)
             self.camConfig['stretch'] = not current

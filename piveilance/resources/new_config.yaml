@@ -4,9 +4,9 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: float
+  style: flow
   rows: 2
-  cols: 2
+  cols: 3
   positions:
     living_room: (2,2)
     garage: (1,2)

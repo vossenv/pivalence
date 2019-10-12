@@ -1,5 +1,3 @@
-import random
-
 import math
 
 from piveilance.config import Parser
@@ -29,18 +27,13 @@ class FlowLayout():
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
-    def buildLayout(cls, camList, rows, cols):
+    def buildLayout(cls, camList):
 
-        random.shuffle(camList)
-        camList = sorted(camList, key=lambda x: x.order or len(camList)+1)
-
-        grid = set((i, j) for i in range(rows) for j in range(cols))
-
-        for c in camList:
-            if grid:
-                c.position = grid.pop()
-
+        camList = sorted(camList, key=lambda x: x.order or len(camList) + 1)
+        for i, c in enumerate(camList[0: WindowGeometry.numCams]):
+            c.position = WindowGeometry.grid[i]
         return camList
+
 
 class FixedLayout():
     config = None
@@ -50,7 +43,6 @@ class FixedLayout():
         cols = cls.config.get_int('cols')
         rows = cls.config.get_int('rows')
         frameSize = min(width / cols, height / rows)
-
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
@@ -58,18 +50,14 @@ class FixedLayout():
         return (coords[0] - 1, coords[1] - 1)
 
     @classmethod
-    def buildLayout(cls, camList, *args):
+    def buildLayout(cls, camList):
 
-        cols = cls.config.get_int('cols')
-        rows = cls.config.get_int('rows')
-
-        grid = set((i, j) for i in range(rows) for j in range(cols))
         pos = (cls.config.get_dict('positions') or {}).copy()
-
         pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
         pos.update({k: cls.correctCoordinates(v) for k, v in pos.items()})
 
-        free = grid - set(pos.values())
+        grid = WindowGeometry.grid
+        free = set(grid) - set(pos.values())
 
         for c in camList:
             p = pos.get(c.name)
@@ -77,8 +65,39 @@ class FixedLayout():
                 c.position = p
             elif free:
                 c.position = free.pop()
-
-        x = {c.name:c.position for c in camList}
-
-
         return camList
+
+
+class WindowGeometry():
+    rows = None
+    cols = None
+    numCams = None
+    height = None
+    width = None
+    frameSize = None
+    margins = None
+    grid = None
+
+    @classmethod
+    def correctFrameSize(cls):
+        remainder_height = cls.height - cls.frameSize * cls.rows
+        if remainder_height < 0:
+            cls.frameSize = cls.frameSize - abs(remainder_height / cls.rows)
+
+    @classmethod
+    def setMargins(cls):
+        rheight = max(cls.height - cls.frameSize * cls.rows, 0) / 2
+        vheight = max(cls.width - cls.frameSize * cls.cols, 0) / 2
+        cls.margins = (vheight, rheight, vheight, rheight)
+
+    @classmethod
+    def calculateAllProperties(cls):
+        cls.grid = [(i, j) for i in range(cls.rows) for j in range(cls.cols)]
+        cls.correctFrameSize()
+        cls.setMargins()
+
+    @classmethod
+    def update(cls, **values):
+        for k, v in values.items():
+            if v is not None:
+                setattr(cls, k, v)

@@ -1,8 +1,9 @@
+import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
-from piveilance.layout import FixedLayout, FlowLayout
+from piveilance.layout import FixedLayout, FlowLayout, WindowGeometry
 from piveilance.util import *
 
 
@@ -12,14 +13,13 @@ class LayoutManager(QObject):
     def __init__(self, widget, grid, camConfig, layoutConfig):
         super(LayoutManager, self).__init__()
 
-        self.camList = []
-        self.start_time = time.time()
-        self.g = WindowGeometry
+        self.camIds = []
+        self.start = time.time()
         self.widget = widget
         self.grid = grid
         self.camConfig = camConfig
         self.layoutConfig = layoutConfig
-        self.list_refresh = layoutConfig.get_float('list_refresh', 10)
+        self.refresh = layoutConfig.get_float('list_refresh', 10)
         self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
 
         path = self.camConfig.get('type', 'picam.PiCamGenerator').split(".")
@@ -43,42 +43,35 @@ class LayoutManager(QObject):
     @pyqtSlot(object, name="data")
     def recieveData(self, data, triggerRedraw=False):
 
-        delta = time.time() - self.start_time
+        if (not self.camIds
+                or time.time() - self.start > self.refresh):
 
-        if not self.camList or delta > self.list_refresh:
-            camList = list(data.keys())
-
-            if not camList:
-                return
-            elif not self.camList:
-                triggerRedraw = True
-            elif not areSetsEqual(camList, {c.name for c in self.camList}):
+            newCams = list(data.keys())
+            if newCams and not compareIter(newCams, self.camIds):
                 triggerRedraw = True
 
-            self.camList = [self.generator.createCamera(n) for n in camList]
-            self.start_time = time.time()
+            self.camIds = newCams
+            self.start = time.time()
+            random.shuffle(self.camIds)
 
             if triggerRedraw:
                 self.arrange(True)
 
     def arrange(self, triggerRedraw=False):
-        startCols = self.g.cols
-        if not self.camList:
-            return
-
+        preCols = WindowGeometry.cols
+        self.camIds = self.camIds or []
         self.updateWindowGeometry()
 
-        if triggerRedraw or self.g.cols != startCols:
+        if triggerRedraw or WindowGeometry.cols != preCols:
+            c = [self.generator.createCamera(n) for n in self.camIds]
 
+            self.camObj = self.layout.buildLayout(c)
             self.clearLayout()
-            self.camList = self.layout.buildLayout(self.camList, self.g.rows, self.g.cols)
-
-            for c in self.camList:
-                if not c.position:
-                    continue
-                self.grid.addWidget(c, *c.position)
-                self.grid.addWidget(c.label, *c.position)
-                self.setCamOptions.connect(c.setOptions)
+            for c in self.camObj:
+                if c.position:
+                    self.grid.addWidget(c, *c.position)
+                    self.grid.addWidget(c.label, *c.position)
+                    self.setCamOptions.connect(c.setOptions)
 
         self.setCamOptions.emit(self.camConfig)
 
@@ -91,44 +84,11 @@ class LayoutManager(QObject):
         self.grid.setContentsMargins(*m)
 
     def updateWindowGeometry(self):
-        n = self.maxCams if self.maxCams else len(self.camList)
+        n = self.maxCams if self.maxCams else len(self.camIds)
         w = self.widget.frameGeometry().width()
         h = self.widget.frameGeometry().height()
         WindowGeometry.update(width=w, height=h, numCams=n)
         WindowGeometry.update(**self.layout.calculate(w, h, n))
         WindowGeometry.calculateAllProperties()
-        self.camConfig['size'] = self.g.frameSize
+        self.camConfig['size'] = WindowGeometry.frameSize
         self.setContentMargin(WindowGeometry.margins)
-
-
-class WindowGeometry():
-    rows = None
-    cols = None
-    numCams = None
-    height = None
-    width = None
-    frameSize = None
-    margins = None
-
-    @classmethod
-    def correctFrameSize(cls):
-        remainder_height = cls.height - cls.frameSize * cls.rows
-        if remainder_height < 0:
-            cls.frameSize = cls.frameSize - abs(remainder_height / cls.rows)
-
-    @classmethod
-    def setMargins(cls):
-        rheight = max(cls.height - cls.frameSize * cls.rows, 0) / 2
-        vheight = max(cls.width - cls.frameSize * cls.cols, 0) / 2
-        cls.margins = (vheight, rheight, vheight, rheight)
-
-    @classmethod
-    def calculateAllProperties(cls):
-        cls.correctFrameSize()
-        cls.setMargins()
-
-    @classmethod
-    def update(cls, **values):
-        for k, v in values.items():
-            if v is not None:
-                setattr(cls, k, v)

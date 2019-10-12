@@ -1,16 +1,9 @@
-import math
-from PyQt5.QtGui import QPainter, QFont
 
-
-
-
-
-def areSetsEqual(a, b):
-    a = a or set()
-    b = b or set()
-    a = set(a)
-    b = set(b)
-    return (a - b) == (b - a)
+def compareIter(a, b):
+    return (len(a) == len(b) and
+            {x in b for x in a} ==
+            {x in b for x in a} ==
+            {True})
 
 
 class ImageManip():
@@ -42,14 +35,3 @@ class ImageManip():
     @classmethod
     def cropCenter(cls, image, size):
         return cls.crop(image, size, size, size, size)
-
-    #
-    # @classmethod
-    # def addText(cls, image, text):
-    #
-    #     painter = QPainter()
-    #     painter.begin(image)
-    #     painter.setFont(font)
-    #     painter.drawText(position, text)
-    #     painter.end()
-    #
