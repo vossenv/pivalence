@@ -2,7 +2,7 @@ import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
-
+from piveilance.generator.dummy import DummyCamera, DummyGenerator
 from piveilance.layout import FixedLayout, FlowLayout, WindowGeometry
 from piveilance.util import *
 
@@ -31,10 +31,6 @@ class LayoutManager(QObject):
         self.generator = gen_class(self.camConfig)
         self.generator.updateCameras.connect(self.recieveData)
         self.generator.start()
-
-    def setLayout(self, layout):
-        self.layout = layout
-        self.layout.config = self.layoutConfig
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
@@ -73,11 +69,24 @@ class LayoutManager(QObject):
                     self.grid.addWidget(c.label, *c.position)
                     self.setCamOptions.connect(c.setOptions)
 
+            for p in WindowGeometry.free:
+                d = DummyCamera(str(p), self.camConfig)
+                d.position = p
+                self.grid.addWidget(d, *d.position)
+                self.grid.addWidget(d.label, *d.position)
+                self.setCamOptions.connect(d.setOptions)
+                d.setImage()
+
         self.setCamOptions.emit(self.camConfig)
+
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):
             self.grid.takeAt(i).widget().deleteLater()
+
+    def setLayout(self, layout):
+        self.layout = layout
+        self.layout.config = self.layoutConfig
 
     def setContentMargin(self, margins):
         m = margins if not self.camConfig.get_bool('stretch') else (0, 0, 0, 0)

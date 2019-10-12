@@ -24,7 +24,6 @@ class FlowLayout():
                 break
             cols -= 1
         cols = 1 if cols < 1 else cols
-
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
@@ -41,6 +40,11 @@ class FixedLayout():
 
     @classmethod
     def calculate(cls, width, height, *args):
+
+        """
+        # Rows and cols are predefined from the config
+
+        """
         cols = cls.config.get_int('cols', 3)
         rows = cls.config.get_int('rows', 3)
         frameSize = min(width / cols, height / rows)
@@ -58,18 +62,22 @@ class FixedLayout():
                 c.position = p
             elif free:
                 c.position = free.pop(0)
+
+        WindowGeometry.free = free
         return camList
 
     @classmethod
     def convertCoordinates(cls, pos):
-        pos = pos.copy()
-        pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
-        pos.update({k: cls.correctCoordinates(v) for k, v in pos.items()})
-        return pos
 
-    @classmethod
-    def correctCoordinates(cls, coords):
-        return (coords[0] - 1, coords[1] - 1)
+        """
+        # Convert literal string coordinates to tuple
+
+        """
+        pos = pos.copy()
+        cc = lambda c: (c[0] - 1, c[1] - 1)
+        pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
+        pos.update({k: cc(v) for k, v in pos.items()})
+        return pos
 
 class WindowGeometry():
     rows = None
@@ -80,6 +88,7 @@ class WindowGeometry():
     frameSize = None
     margins = None
     grid = None
+    free = None
 
     @classmethod
     def correctFrameSize(cls):

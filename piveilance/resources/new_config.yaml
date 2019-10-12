@@ -2,18 +2,20 @@ view:
   fullscreen: false
 
 layout:
-  max_allowed: 0
+  max_allowed: 10
   list_refresh: 10
-  style: flow
-  rows: 2
-  cols: 2
+  style: fixed
+  rows: 3
+  cols: 4
   positions:
     living_room: (1,1)
     garage: (1,2)
 
 
+
 generators:
   type: picam.PiCamGenerator
+  #type: dummy.DummyGenerator
   crop_ratio: 0.2
   initial_size: 300
   direction: right
