@@ -40,33 +40,35 @@ class FixedLayout():
 
     @classmethod
     def calculate(cls, width, height, *args):
-        cols = cls.config.get_int('cols')
-        rows = cls.config.get_int('rows')
+        cols = cls.config.get_int('cols', 3)
+        rows = cls.config.get_int('rows', 3)
         frameSize = min(width / cols, height / rows)
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
-    def correctCoordinates(cls, coords):
-        return (coords[0] - 1, coords[1] - 1)
-
-    @classmethod
     def buildLayout(cls, camList):
 
-        pos = (cls.config.get_dict('positions') or {}).copy()
-        pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
-        pos.update({k: cls.correctCoordinates(v) for k, v in pos.items()})
-
-        grid = WindowGeometry.grid
-        free = set(grid) - set(pos.values())
+        pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
+        free = [c for c in WindowGeometry.grid if c not in pos.values()]
 
         for c in camList:
             p = pos.get(c.name)
-            if p in grid:
+            if p in WindowGeometry.grid:
                 c.position = p
             elif free:
-                c.position = free.pop()
+                c.position = free.pop(0)
         return camList
 
+    @classmethod
+    def convertCoordinates(cls, pos):
+        pos = pos.copy()
+        pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
+        pos.update({k: cls.correctCoordinates(v) for k, v in pos.items()})
+        return pos
+
+    @classmethod
+    def correctCoordinates(cls, coords):
+        return (coords[0] - 1, coords[1] - 1)
 
 class WindowGeometry():
     rows = None
