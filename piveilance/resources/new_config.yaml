@@ -2,7 +2,7 @@ view:
   fullscreen: false
 
 layout:
-  max_allowed: 10
+  max_allowed: 0
   list_refresh: 10
   style: fixed
   rows: 3

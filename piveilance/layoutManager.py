@@ -69,13 +69,14 @@ class LayoutManager(QObject):
                     self.grid.addWidget(c.label, *c.position)
                     self.setCamOptions.connect(c.setOptions)
 
-            for p in WindowGeometry.free:
-                d = DummyCamera(str(p), self.camConfig)
-                d.position = p
-                self.grid.addWidget(d, *d.position)
-                self.grid.addWidget(d.label, *d.position)
-                self.setCamOptions.connect(d.setOptions)
-                d.setImage()
+            if self.layout == FixedLayout:
+                for p in WindowGeometry.free:
+                    d = DummyCamera(str(p), self.camConfig)
+                    d.position = p
+                    self.grid.addWidget(d, *d.position)
+                    self.grid.addWidget(d.label, *d.position)
+                    self.setCamOptions.connect(d.setOptions)
+                    d.setImage()
 
         self.setCamOptions.emit(self.camConfig)
 
