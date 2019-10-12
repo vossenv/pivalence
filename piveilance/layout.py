@@ -6,15 +6,16 @@ from piveilance.config import Parser
 class FlowLayout():
 
     @classmethod
-    def calculate(cls, width, height, camCount=None):
+    def calculate(cls, width, height, camCount):
 
         """
         # Iterative computation to determine actual cols
 
         """
         # Start by initial guess that ncols = ncams
+
         cols = rows = frameSize = camCount
-        while (cols > 0):
+        while cols > 0:
             rows = math.ceil(camCount / cols)
             frameSize = width / cols
             if ((height - frameSize * rows) < frameSize

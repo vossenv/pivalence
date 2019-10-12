@@ -4,7 +4,7 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: fixed
+  style: flow
   rows: 2
   cols: 2
   positions:
