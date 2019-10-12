@@ -66,6 +66,7 @@ class Camera(QLabel):
             raise ValueError("Crop cannot be negative or inverse (>1)")
 
         self.position = self.options.get('position', None)
+        self.order = self.options.get('order', None)
         self.size = self.options.get_int('size')
         self.showLabel = self.options.get_bool('labels', True)
         self.font_ratio = self.options.get_float('font_ratio', 0.4)

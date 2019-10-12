@@ -52,10 +52,10 @@ class LayoutManager(QObject):
                 return
             elif not self.camList:
                 triggerRedraw = True
-            elif not areSetsEqual(camList, self.camList):
+            elif not areSetsEqual(camList, {c.name for c in self.camList}):
                 triggerRedraw = True
 
-            self.camList = camList
+            self.camList = [self.generator.createCamera(n) for n in camList]
             self.start_time = time.time()
 
             if triggerRedraw:
@@ -69,12 +69,13 @@ class LayoutManager(QObject):
         self.updateWindowGeometry()
 
         if triggerRedraw or self.g.cols != startCols:
-            print(triggerRedraw)
-            self.clearLayout()
-            cams = [self.generator.createCamera(n)
-                    for n in self.camList[0:self.g.numCams]]
 
-            for c in self.layout.buildLayout(cams, self.g.rows, self.g.cols):
+            self.clearLayout()
+            self.camList = self.layout.buildLayout(self.camList, self.g.rows, self.g.cols)
+
+            for c in self.camList:
+                if not c.position:
+                    continue
                 self.grid.addWidget(c, *c.position)
                 self.grid.addWidget(c.label, *c.position)
                 self.setCamOptions.connect(c.setOptions)

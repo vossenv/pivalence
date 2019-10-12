@@ -4,7 +4,7 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: fixed
+  style: float
   rows: 2
   cols: 2
   positions:
@@ -28,22 +28,22 @@ generators:
     living_room:
       crop_ratio: 0.8
       direction: hcenter
-      position: 1
+      order: 1
     garage:
       crop_ratio: 0.8
       direction: hcenter
-      position: 5
+      order: 5
     front_bottom:
-      position: 8
+      order: 8
     front_top:
-      position: 4
-    catpod:
-      position: 7
-    back_top:
-      position: 3
-    garage_side:
-      position:  6
-    back_bottom:
-      position: 2
+      order: 4
+#    catpod:
+#      order: 7
+#    back_top:
+#      order: 3
+#    garage_side:
+#      order:  6
+#    back_bottom:
+#      order: 2
 
   #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'

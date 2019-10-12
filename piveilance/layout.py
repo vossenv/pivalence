@@ -31,19 +31,16 @@ class FlowLayout():
     @classmethod
     def buildLayout(cls, camList, rows, cols):
 
-        fixedCams = sorted([c for c in camList if c.position], key=lambda x: x.position)
-        freeCams = [c for c in camList if not c.position]
-        random.shuffle(freeCams)
-        fixedCams.extend(freeCams)
+        random.shuffle(camList)
+        camList = sorted(camList, key=lambda x: x.order or len(camList)+1)
 
-        camsOutput = []
-        positions = [(i, j) for i in range(rows) for j in range(cols)]
-        for c in fixedCams:
-            p = positions.pop(0)
-            c.position = p
-            camsOutput.append(c)
-        return camsOutput
+        grid = set((i, j) for i in range(rows) for j in range(cols))
 
+        for c in camList:
+            if grid:
+                c.position = grid.pop()
+
+        return camList
 
 class FixedLayout():
     config = None
@@ -69,22 +66,19 @@ class FixedLayout():
         grid = set((i, j) for i in range(rows) for j in range(cols))
         pos = (cls.config.get_dict('positions') or {}).copy()
 
-        fixed = []
-        floating = []
-
         pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
         pos.update({k: cls.correctCoordinates(v) for k, v in pos.items()})
 
-        for c in camList:
-            c.position = pos.get(c.name)
-            if c.position and c.position in grid:
-                fixed.append(c)
-                grid.remove(c.position)
-            else:
-                floating.append(c)
+        free = grid - set(pos.values())
 
-        for c in floating:
-            if grid:
-                c.position = grid.pop()
-                fixed.append(c)
-        return fixed
+        for c in camList:
+            p = pos.get(c.name)
+            if p in grid:
+                c.position = p
+            elif free:
+                c.position = free.pop()
+
+        x = {c.name:c.position for c in camList}
+
+
+        return camList
