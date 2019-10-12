@@ -98,7 +98,7 @@ class DummyCamera(QLabel):
         #    self.setPixmap(qp)
 
             img = QImage()
-            img.load("resources/ent.jpg")
+            img.load("resources/data.gif")
             if self.crop_ratio != 0:
                 crop = max((img.width() - img.height()) * self.crop_ratio, 0)
                 img = ImageManip.crop_direction(img, crop, self.direction)

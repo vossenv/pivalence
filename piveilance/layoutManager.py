@@ -59,12 +59,13 @@ class LayoutManager(QObject):
         self.updateWindowGeometry()
 
         if triggerRedraw or WindowGeometry.cols != preCols:
-            c = [self.generator.createCamera(n) for n in self.camIds]
+            c = {n:self.generator.createCamera(n) for n in self.camIds}
 
             self.camObj = self.layout.buildLayout(c)
             self.clearLayout()
-            for c in self.camObj:
-                if c.position:
+
+            for n, c in self.camObj.items():
+                if c.position and c.name in self.camIds:
                     self.grid.addWidget(c, *c.position)
                     self.grid.addWidget(c.label, *c.position)
                     self.setCamOptions.connect(c.setOptions)
