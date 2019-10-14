@@ -77,7 +77,7 @@ class LayoutManager(QObject):
                     self.grid.addWidget(d, *d.position)
                     self.grid.addWidget(d.label, *d.position)
                     self.setCamOptions.connect(d.setOptions)
-                    d.setImage()
+                   # d.setImage()
 
         self.setCamOptions.emit(self.camConfig)
 

@@ -1,14 +1,10 @@
-import base64
-import random
-import time
 from copy import deepcopy
 
 from PyQt5.QtCore import pyqtSlot, QSize, Qt
-from PyQt5.QtGui import QPixmap, QImage, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
 from piveilance.config import Parser
-from piveilance.util import ImageManip
 
 
 class Camera(QLabel):
@@ -23,8 +19,9 @@ class Camera(QLabel):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
         self.label = QLabel()
-        self.px = None
+        self.pixmap = None
         self.name = name
+        self.movie = None
         self.setOptions(options)
 
     @pyqtSlot(object, name="reconfigure")
@@ -50,8 +47,8 @@ class Camera(QLabel):
         self.setLabel()
 
     def setFrameSize(self):
-        if self.px:
-            self.setPixmap(self.px.scaled(self.size, self.size))
+        if self.pixmap:
+            self.setPixmap(self.pixmap.scaled(self.size, self.size))
 
     def setLabel(self):
         self.label.setText(self.name if self.showLabel else "")
@@ -62,18 +59,4 @@ class Camera(QLabel):
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
-        if self.name in camData:
-            data = self.getImage(camData[self.name]['image'])
-            img = QImage()
-            img.loadFromData(data)
-            if self.crop_ratio != 0:
-                crop = max((img.width() - img.height()) * self.crop_ratio, 0)
-                img = ImageManip.crop_direction(img, crop, self.direction)
-
-            time.sleep(0.005 * random.randint(0, 1))
-            self.px = QPixmap().fromImage(img)
-            self.setFrameSize()
-
-    def getImage(self, data):
-        byte = data.encode('utf-8')
-        return base64.decodebytes(byte)
+        pass
