@@ -2,7 +2,7 @@ import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
-from piveilance.generator.dummy import DummyCamera, DummyGenerator
+from piveilance.generator.placeholder import PlaceholderCamera
 from piveilance.layout import FixedLayout, FlowLayout, WindowGeometry
 from piveilance.util import *
 
@@ -72,7 +72,7 @@ class LayoutManager(QObject):
 
             if self.layout == FixedLayout:
                 for p in WindowGeometry.free:
-                    d = DummyCamera(str(p), self.camConfig)
+                    d = PlaceholderCamera(str(p), self.camConfig)
                     d.position = p
                     self.grid.addWidget(d, *d.position)
                     self.grid.addWidget(d.label, *d.position)

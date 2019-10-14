@@ -4,12 +4,12 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: fixed
-  cols: 2
-  rows: 2
+  style: flow
+  cols: 4
+  rows: 3
   positions:
     living_room: (1,3)
-    garage: (1,1)
+    garage1: (1,1)
 
 
 
