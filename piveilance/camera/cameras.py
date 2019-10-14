@@ -1,10 +1,15 @@
+import base64
+import random
+import time
 from copy import deepcopy
 
 from PyQt5.QtCore import pyqtSlot, QSize, Qt
 from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QPixmap, QImage, QMovie
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
 from piveilance.config import Parser
+from piveilance.util import ImageManip
 
 
 class Camera(QLabel):
@@ -60,3 +65,62 @@ class Camera(QLabel):
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
         pass
+
+
+class PiCamera(Camera):
+    def __init__(self, name="default", options=None, parent=None):
+        super(PiCamera, self).__init__(name, options, parent)
+
+    @pyqtSlot(object, name="setimage")
+    def setImage(self, camData=None):
+        if self.name in camData:
+            data = self.getImage(camData[self.name]['image'])
+            img = QImage()
+            img.loadFromData(data)
+            if self.crop_ratio != 0:
+                crop = max((img.width() - img.height()) * self.crop_ratio, 0)
+                img = ImageManip.crop_direction(img, crop, self.direction)
+
+            time.sleep(0.005 * random.randint(0, 1))
+            self.pixmap = QPixmap().fromImage(img)
+            self.setFrameSize()
+
+    def getImage(self, data):
+        byte = data.encode('utf-8')
+        return base64.decodebytes(byte)
+
+
+class DummyCamera(Camera):
+    def __init__(self, name="default", options=None, parent=None):
+        super(DummyCamera, self).__init__(name, options, parent)
+
+    @pyqtSlot(object, name="setimage")
+    def setImage(self, camData=None):
+
+        if not self.pixmap:
+            img = QImage()
+            img.load("resources/ent.jpg")
+            if self.crop_ratio != 0:
+                crop = max((img.width() - img.height()) * self.crop_ratio, 0)
+                img = ImageManip.crop_direction(img, crop, self.direction)
+
+            time.sleep(0.005 * random.randint(0, 1))
+            self.pixmap = QPixmap().fromImage(img)
+            self.setFrameSize()
+
+
+class PlaceholderCamera(Camera):
+    def __init__(self, name="default", options=None, parent=None):
+        super(PlaceholderCamera, self).__init__(name, options, parent)
+        self.setImage()
+
+    def setFrameSize(self):
+        if self.movie:
+            self.movie.setScaledSize(QSize(self.size, self.size))
+
+    @pyqtSlot(object, name="setimage")
+    def setImage(self, camData=None):
+        self.movie = QMovie("resources/noise.gif")
+        self.setMovie(self.movie)
+        self.setFrameSize()
+        self.movie.start()

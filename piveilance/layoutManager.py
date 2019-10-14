@@ -2,7 +2,8 @@ import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
-from piveilance.generator.placeholder import PlaceholderCamera
+
+from piveilance.camera.cameras import PlaceholderCamera
 from piveilance.layout import FixedLayout, FlowLayout, WindowGeometry
 from piveilance.util import *
 
@@ -22,13 +23,13 @@ class LayoutManager(QObject):
         self.refresh = layoutConfig.get_float('list_refresh', 10)
         self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
 
-        path = self.camConfig.get('type', 'picam.PiCamGenerator').split(".")
-        module = __import__('piveilance.generator.' + path[0], fromlist=[''])
-        gen_class = getattr(module, path[-1])
+        genName = self.camConfig.get('type', 'PiCamGenerator')
+        module = __import__('piveilance.camera.generators', fromlist=[''])
+        genClass = getattr(module, genName)
         style = layoutConfig.get('style', 'flow')
 
         self.setLayout(FixedLayout if style == 'fixed' else FlowLayout)
-        self.generator = gen_class(self.camConfig)
+        self.generator = genClass(self.camConfig)
         self.generator.updateCameras.connect(self.recieveData)
         self.generator.start()
 
@@ -59,7 +60,7 @@ class LayoutManager(QObject):
         self.updateWindowGeometry()
 
         if triggerRedraw or WindowGeometry.cols != preCols:
-            c = {n:self.generator.createCamera(n) for n in self.camIds}
+            c = {n: self.generator.createCamera(n) for n in self.camIds}
 
             self.camObj = self.layout.buildLayout(c)
             self.clearLayout()
@@ -77,10 +78,9 @@ class LayoutManager(QObject):
                     self.grid.addWidget(d, *d.position)
                     self.grid.addWidget(d.label, *d.position)
                     self.setCamOptions.connect(d.setOptions)
-                   # d.setImage()
+
 
         self.setCamOptions.emit(self.camConfig)
-
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):

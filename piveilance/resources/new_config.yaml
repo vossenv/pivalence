@@ -4,17 +4,17 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: fixed
+  style: fixed1
   cols: 4
-  rows: 2
+  rows: 3
   positions:
     living_room: (1,3)
     deleteme: (1,1)
 
 
 
-generators:
-  type: picam.PiCamGenerator
+cameras:
+  type: PiCamGenerator
   #type: dummy.DummyGenerator
   crop_ratio: 0.2
   initial_size: 300
