@@ -118,7 +118,6 @@ class PlaceholderCamera(Camera):
         if self.movie:
             self.movie.setScaledSize(QSize(self.size, self.size))
 
-    @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
         self.movie = QMovie("resources/noise.gif")
         self.setMovie(self.movie)

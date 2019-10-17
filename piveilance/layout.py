@@ -27,7 +27,7 @@ class FlowLayout():
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
-    def buildLayout(cls, camList):
+    def buildLayout(cls, camList, *args):
 
         cams = sorted(camList.values(), key=lambda x: x.order or len(camList) + 1)
         for i, c in enumerate(cams[0: WindowGeometry.numCams]):
@@ -47,11 +47,11 @@ class FixedLayout():
         """
         cols = cls.config.get_int('cols', 3)
         rows = cls.config.get_int('rows', 3)
-        frameSize = min(width / cols, height / rows)
+        frameSize = width/cols
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
-    def buildLayout(cls, camList):
+    def buildLayout(cls, camList, getPlaceholder):
 
         pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
         rev = {v: k for k, v in pos.items()}
@@ -68,6 +68,12 @@ class FixedLayout():
                 c.position = p if p in WindowGeometry.grid else None
 
         WindowGeometry.free = free
+
+        for p in WindowGeometry.free:
+            d = getPlaceholder(str(p))
+            d.position = p
+            camList[d.name] = d
+
         return camList
 
     @classmethod
@@ -94,6 +100,10 @@ class WindowGeometry():
     margins = None
     grid = None
     free = None
+
+    @classmethod
+    def total(cls):
+        return cls.cols * cls.rows
 
     @classmethod
     def correctFrameSize(cls):

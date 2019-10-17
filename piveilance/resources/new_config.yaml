@@ -4,7 +4,7 @@ view:
 layout:
   max_allowed: 0
   list_refresh: 10
-  style: fixed1
+  style: fixed
   cols: 4
   rows: 3
   positions:

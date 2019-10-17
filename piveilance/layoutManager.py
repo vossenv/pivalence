@@ -55,32 +55,26 @@ class LayoutManager(QObject):
                 self.arrange(True)
 
     def arrange(self, triggerRedraw=False):
+        # if not self.camIds:
+        #     return
+
         preCols = WindowGeometry.cols
-        self.camIds = self.camIds or []
         self.updateWindowGeometry()
 
         if triggerRedraw or WindowGeometry.cols != preCols:
             c = {n: self.generator.createCamera(n) for n in self.camIds}
-
-            self.camObj = self.layout.buildLayout(c)
+            self.camObj = self.layout.buildLayout(c, self.getPlaceholder)
             self.clearLayout()
 
             for n, c in self.camObj.items():
-                if c.position and c.name in self.camIds:
-                    self.grid.addWidget(c, *c.position)
-                    self.grid.addWidget(c.label, *c.position)
-                    self.setCamOptions.connect(c.setOptions)
-
-            if self.layout == FixedLayout:
-                for p in WindowGeometry.free:
-                    d = PlaceholderCamera(str(p), self.camConfig)
-                    d.position = p
-                    self.grid.addWidget(d, *d.position)
-                    self.grid.addWidget(d.label, *d.position)
-                    self.setCamOptions.connect(d.setOptions)
-
+                self.grid.addWidget(c, *c.position)
+                self.grid.addWidget(c.label, *c.position)
+                self.setCamOptions.connect(c.setOptions)
 
         self.setCamOptions.emit(self.camConfig)
+
+    def getPlaceholder(self, name):
+        return PlaceholderCamera(name, self.camConfig)
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):
