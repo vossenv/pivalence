@@ -5,7 +5,7 @@ import uuid
 import requests
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from piveilance.camera.cameras import PiCamera, DummyCamera
+from piveilance.cameras import PiCamera, DummyCamera
 
 
 class Generator(QThread):

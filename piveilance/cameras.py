@@ -110,8 +110,9 @@ class DummyCamera(Camera):
 
 
 class PlaceholderCamera(Camera):
-    def __init__(self, name="default", options=None, parent=None):
+    def __init__(self, name="default", position=None, options=None, parent=None):
         super(PlaceholderCamera, self).__init__(name, options, parent)
+        self.position = position
         self.setImage()
 
     def setFrameSize(self):

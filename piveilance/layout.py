@@ -3,6 +3,10 @@ import math
 from piveilance.config import Parser
 
 
+def parseLayout(style):
+    return FixedLayout if style == 'fixed' else FlowLayout
+
+
 class FlowLayout():
 
     @classmethod
@@ -51,12 +55,18 @@ class FixedLayout():
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
-    def buildLayout(cls, camList, getPlaceholder):
+    def filterCameraPositions(cls, camList):
+        positions = cls.config.get_dict('positions', {})
+        return {k: v for k, v in positions.items() if k in camList}
+
+    @classmethod
+    def buildLayout2(cls, camList, getPlaceholder):
+
+      #  pos = cls.convertCoordinates(cls.filterCameraPositions(camList))
 
         pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
         rev = {v: k for k, v in pos.items()}
         free = [c for c in WindowGeometry.grid if c not in pos.values()]
-
         free.extend([k for k in rev if rev[k] not in camList.keys()])
 
         for n, c in camList.items():
@@ -73,6 +83,30 @@ class FixedLayout():
             d = getPlaceholder(str(p))
             d.position = p
             camList[d.name] = d
+
+        return camList
+
+    @classmethod
+    def buildLayout(cls, camList, getPlaceholder):
+
+        if not camList:
+            return {}
+
+        fixedCoords = cls.convertCoordinates(cls.config.get_dict('positions', {}))
+        for name, pos in fixedCoords.items():
+            if pos not in WindowGeometry.grid:
+                print("Warning: specified position {0} for {1} lies outside the grid".format(pos, name))
+            if name in camList.keys():
+                camList[name].position = pos
+            else:
+                camList[name] = getPlaceholder(name, pos)
+
+        # WindowGeometry.free = [c for c in WindowGeometry.grid]
+        #
+        # for p in WindowGeometry.free:
+        #     d = getPlaceholder(str(p))
+        #     d.position = p
+        #     camList[d.name] = d
 
         return camList
 

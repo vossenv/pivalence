@@ -5,7 +5,7 @@ layout:
   max_allowed: 0
   list_refresh: 10
   style: fixed
-  cols: 4
+  cols: 3
   rows: 3
   positions:
     living_room: (1,3)

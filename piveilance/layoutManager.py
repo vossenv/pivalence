@@ -1,10 +1,12 @@
 import random
+import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
-from piveilance.camera.cameras import PlaceholderCamera
-from piveilance.layout import FixedLayout, FlowLayout, WindowGeometry
+import piveilance.generators
+from piveilance.cameras import PlaceholderCamera
+from piveilance.layout import WindowGeometry, parseLayout
 from piveilance.util import *
 
 
@@ -22,14 +24,9 @@ class LayoutManager(QObject):
         self.layoutConfig = layoutConfig
         self.refresh = layoutConfig.get_float('list_refresh', 10)
         self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
-
-        genName = self.camConfig.get('type', 'PiCamGenerator')
-        module = __import__('piveilance.camera.generators', fromlist=[''])
-        genClass = getattr(module, genName)
-        style = layoutConfig.get('style', 'flow')
-
-        self.setLayout(FixedLayout if style == 'fixed' else FlowLayout)
-        self.generator = genClass(self.camConfig)
+        self.generatorType = getattr(piveilance.generators, self.camConfig.get('type', 'PiCamGenerator'))
+        self.setLayout(parseLayout(layoutConfig.get('style', 'flow')))
+        self.generator = self.generatorType(self.camConfig)
         self.generator.updateCameras.connect(self.recieveData)
         self.generator.start()
 
@@ -40,17 +37,13 @@ class LayoutManager(QObject):
     @pyqtSlot(object, name="data")
     def recieveData(self, data, triggerRedraw=False):
 
-        if (not self.camIds
-                or time.time() - self.start > self.refresh):
-
+        if (not self.camIds or time.time() - self.start > self.refresh):
             newCams = list(data.keys())
             if newCams and not compareIter(newCams, self.camIds):
                 triggerRedraw = True
-
             self.camIds = newCams
             self.start = time.time()
             random.shuffle(self.camIds)
-
             if triggerRedraw:
                 self.arrange(True)
 
@@ -73,8 +66,8 @@ class LayoutManager(QObject):
 
         self.setCamOptions.emit(self.camConfig)
 
-    def getPlaceholder(self, name):
-        return PlaceholderCamera(name, self.camConfig)
+    def getPlaceholder(self, name, position=None):
+        return PlaceholderCamera(name, position, self.camConfig)
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):
