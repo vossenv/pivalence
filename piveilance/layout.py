@@ -51,7 +51,7 @@ class FixedLayout():
         """
         cols = cls.config.get_int('cols', 3)
         rows = cls.config.get_int('rows', 3)
-        frameSize = width/cols
+        frameSize = width / cols
         return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
 
     @classmethod
@@ -62,7 +62,7 @@ class FixedLayout():
     @classmethod
     def buildLayout2(cls, camList, getPlaceholder):
 
-      #  pos = cls.convertCoordinates(cls.filterCameraPositions(camList))
+        #  pos = cls.convertCoordinates(cls.filterCameraPositions(camList))
 
         pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
         rev = {v: k for k, v in pos.items()}
@@ -92,23 +92,35 @@ class FixedLayout():
         if not camList:
             return {}
 
+        newList = {}
+        remainingCoords = set(WindowGeometry.grid.copy())
+
         fixedCoords = cls.convertCoordinates(cls.config.get_dict('positions', {}))
         for name, pos in fixedCoords.items():
             if pos not in WindowGeometry.grid:
                 print("Warning: specified position {0} for {1} lies outside the grid".format(pos, name))
             if name in camList.keys():
-                camList[name].position = pos
+                newList[name] = camList.pop(name)
+                newList[name].position = pos
             else:
-                camList[name] = getPlaceholder(name, pos)
+                newList[name] = getPlaceholder(name, pos)
+            remainingCoords.remove(pos)
 
-        # WindowGeometry.free = [c for c in WindowGeometry.grid]
-        #
-        # for p in WindowGeometry.free:
-        #     d = getPlaceholder(str(p))
-        #     d.position = p
-        #     camList[d.name] = d
+        # try:
+        #     for name in camList.copy():
+        #         newList[name] = camList.pop(name)
+        #         newList[name].position = remainingCoords.pop()
+        # except Exception as e:
+        #     print("Remaining cameras could not be added - no space left in grid! " + str(camList.keys))
+        try:
+            keys = camList.keys()
+            for p in remainingCoords:
+                cam = camList.pop()
+                newList[str(p)] = getPlaceholder(str(p), p)
+        except Exception as e:
+            print()
 
-        return camList
+        return newList
 
     @classmethod
     def convertCoordinates(cls, pos):
