@@ -93,18 +93,27 @@ class FixedLayout():
             return {}
 
         newList = {}
-        remainingCoords = set(WindowGeometry.grid.copy())
 
-        fixedCoords = cls.convertCoordinates(cls.config.get_dict('positions', {}))
-        for name, pos in fixedCoords.items():
-            if pos not in WindowGeometry.grid:
-                print("Warning: specified position {0} for {1} lies outside the grid".format(pos, name))
-            if name in camList.keys():
-                newList[name] = camList.pop(name)
-                newList[name].position = pos
-            else:
-                newList[name] = getPlaceholder(name, pos)
-            remainingCoords.remove(pos)
+        fixedCoords = cls.config.get_dict('positions', {})
+
+        x =  {Parser.parse_collection(v): k for k, v in fixedCoords.items()}
+
+        for c in WindowGeometry.grid:
+
+            print()
+
+        # remainingCoords = set(WindowGeometry.grid.copy())
+        #
+        # fixedCoords = cls.convertCoordinates(cls.config.get_dict('positions', {}))
+        # for name, pos in fixedCoords.items():
+        #     if pos not in WindowGeometry.grid:
+        #         print("Warning: specified position {0} for {1} lies outside the grid".format(pos, name))
+        #     if name in camList.keys():
+        #         newList[name] = camList.pop(name)
+        #         newList[name].position = pos
+        #     else:
+        #         newList[name] = getPlaceholder(name, pos)
+        #     remainingCoords.remove(pos)
 
         # try:
         #     for name in camList.copy():
@@ -112,15 +121,19 @@ class FixedLayout():
         #         newList[name].position = remainingCoords.pop()
         # except Exception as e:
         #     print("Remaining cameras could not be added - no space left in grid! " + str(camList.keys))
-        try:
-            keys = camList.keys()
-            for p in remainingCoords:
-                cam = camList.pop()
-                newList[str(p)] = getPlaceholder(str(p), p)
-        except Exception as e:
-            print()
+        # try:
+        #     keys = camList.keys()
+        #     for p in remainingCoords:
+        #         cam = camList.pop()
+        #         newList[str(p)] = getPlaceholder(str(p), p)
+        # except Exception as e:
+        #    print()
 
         return newList
+
+    @classmethod
+    def parseTuple(cls, strTuple):
+        return
 
     @classmethod
     def convertCoordinates(cls, pos):

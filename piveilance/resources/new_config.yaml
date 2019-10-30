@@ -5,6 +5,7 @@ layout:
   max_allowed: 0
   list_refresh: 10
   style: fixed
+  fixed:
   cols: 3
   rows: 3
   positions:
@@ -42,7 +43,7 @@ cameras:
 #    catpod:
 #      order: 7
 #    back_top:
-#      order: 3
+     # order: 3
 #    garage_side:
 #      order:  6
 #    back_bottom:
