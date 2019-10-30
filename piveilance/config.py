@@ -1,40 +1,38 @@
-import ast
-import json
+import logging
+import logging.config
 import os
 import re
+import sys
 from collections import UserDict, Mapping
 from copy import deepcopy
-from datetime import datetime, timedelta
-from io import StringIO
-from json import JSONDecodeError
 
 import yaml
-from dateutil import parser
-from yaml.scanner import ScannerError
+
+from piveilance.util import parse_type, correct_path, decode, as_list, parse_exception
 
 
 class Config(UserDict):
 
-    def __init__(self, data):
+    def __init__(self, data, merge_env=False):
         super(Config, self).__init__(data)
+        if merge_env:
+            self.env_overrides()
 
-    def get_config(self, name):
+    def get_sub_config(self, name):
         return Config(self.get(name, {}))
 
     def get_as(self, name, default=None, required=False, as_type=None):
         val = self.get(name, default)
         if required and not val:
             raise AssertionError("Value for " + name + " required but not given")
-        if val and as_type:
-            val = Parser.parse_type(val, as_type)
-        return val if val is not None else default
+        return parse_type(val, as_type) if as_type else val
 
     def get_bool(self, name, default=False, required=False):
-        return self.get_as(name, default, required, bool)
+        val = self.get_as(name, default, required)
+        return str(val).lower() in ['true', '1']
 
-    def get_string(self, name, default=False, required=False, decode=False):
-        val = self.get_as(name, default, required, str)
-        return Parser.decode(val, True) if decode else val
+    def get_string(self, name, default=False, required=False):
+        return self.get_as(name, default, required, str)
 
     def get_int(self, name, default=False, required=False):
         return self.get_as(name, default, required, int)
@@ -50,7 +48,6 @@ class Config(UserDict):
 
     def merge(self, update):
         self.merge_dict(self.data, update)
-        return self
 
     def get_path(self, name, default=None, required=False):
         raw = self.get_as(name, default, required)
@@ -63,9 +60,19 @@ class Config(UserDict):
             else:
                 parent[r] = os.path.join(dir, path)
 
+    def env_overrides(self, key="cfg."):
+        overrides = {}
+        reduced = {decode(k, True): decode(v, True) for k, v in os.environ._data.items() if decode(k, True)}
+        reduced = {k.lstrip(key): v for k, v in reduced.items() if k.startswith(key)}
+
+        for k, v in reduced.items():
+            entry = Config.make_dict(k.split("."), v)
+            Config.merge_dict(overrides, entry)
+        Config.merge_dict(self.data, overrides)
+
     @classmethod
-    def from_yaml(cls, props_file):
-        return Config(cls.load_yaml(props_file))
+    def from_yaml(cls, props_file, merge_env=False):
+        return Config(cls.load_yaml(props_file), merge_env)
 
     @staticmethod
     def load_yaml(yaml_file):
@@ -107,140 +114,82 @@ class Config(UserDict):
         return d1
 
 
-class Parser():
+class FormattedDumper(yaml.Dumper):
+    @classmethod
+    def options(cls):
+        return {
+            'Dumper': FormattedDumper,
+            'default_flow_style': False,
+            'sort_keys': False
+        }
+
+    def increase_indent(self, flow=False, indentless=False):
+        return super(FormattedDumper, self).increase_indent(flow, False)
 
     @staticmethod
-    def parse_type(value, as_type):
+    def str_presenter(dumper, data):
+        if len(data.splitlines()) > 1:  # check for multiline string
+            return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
-        try:
-            if as_type == bool:
-                return Parser.parse_bool(value)
-            elif as_type == list:
-                return Parser.parse_list(value)
-            elif as_type == dict:
-                return Parser.parse_dict(value)
-            elif as_type == timedelta:
-                return Parser.parse_time_delta(value)
-            elif as_type == datetime:
-                return Parser.parse_datetime(value)
-            elif as_type == "json":
-                return Parser.parse_yaml_json(value, data_type="json")
-            elif as_type == "yaml":
-                return Parser.parse_yaml_json(value, data_type="yaml")
-            else:
-                return as_type(value)
-        except:
-            raise TypeError("Error parsing {0} as type {1}".format(value, as_type))
+
+yaml.add_representer(str, FormattedDumper.str_presenter)
+
+
+class Logging:
 
     @staticmethod
-    def parse_datetime(date):
-        if isinstance(date, datetime):
-            return date
-        if not isinstance(date, str):
-            return TypeError("Cannot parse date '{0}' from type: {1}".
-                             format(str(datetime), str(type(datetime))))
-        return parser.parse(date)
+    def init_logger(logging_config, logs_root):
+        with open(logging_config) as cfg:
+            config = yaml.safe_load(cfg)
+
+        log_dirs = {}
+        for k, h in config['handlers'].items():
+            filename = h.get('filename')
+            if filename:
+                filename = correct_path(filename)
+                if not filename == os.path.abspath(filename):
+                    filename = os.path.join(logs_root, filename)
+                h['filename'] = filename
+                log_dir = os.path.dirname(filename)
+                if not os.path.exists(log_dir):
+                    os.makedirs(log_dir)
+                log_dirs[k] = log_dir
+            logging.config.dictConfig(config)
+        return log_dirs
 
     @staticmethod
-    def parse_bool(value):
-        if not value:
-            return False
-        if isinstance(value, bool):
-            return value
-        if value in ["1", "0", 1, 0]:
-            return str(value) == "1"
-        elif value.lower() in ["true", "false"]:
-            return value == "true"
-        raise TypeError("Cannot cast: " + str(value) + " to boolean")
-
-    @staticmethod
-    def parse_list(value):
-        if isinstance(value, set):
-            return list(value)
-        else:
-            return Parser.parse_collection(value, list)
-
-    @staticmethod
-    def parse_dict(value):
-        return Parser.parse_collection(value, dict)
-
-    @staticmethod
-    def parse_collection(value, as_type=None):
-        if value is None:
-            return as_type()
-        elif as_type and isinstance(value, as_type):
-            return value
-        else:
-            try:
-                value = value.decode()
-            except:
-                pass
-            try:
-                return json.loads(value)
-            except:
-                pass
-            try:
-                return ast.literal_eval(value)
-            except:
-                pass
-        return as_type(value) if as_type else value
-
-    @staticmethod
-    def parse_time_delta(value):
-        if isinstance(value, timedelta):
-            return value
-        if value is not None:
-            value = str(value)
-            intervals = re.split('[(days, ):]+', value)
-            if len(intervals) >= 3:
-                d = float(intervals[0]) if len(intervals) == 4 else 0.0
-                s = float(intervals[-1])
-                m = float(intervals[-2])
-                h = float(intervals[-3])
-                value = timedelta(hours=h, minutes=m, seconds=s, days=d)
-        return value
-
-    @staticmethod
-    def parse_yaml_json(data, data_type="json"):
-        if not data:
-            return {}
-        try:
-            if data_type == 'json':
-                return json.loads(data)
-            elif data_type in ['yml', 'yaml']:
-                return yaml.load(StringIO(data))
-        except (JSONDecodeError, ScannerError, ValueError, AttributeError) as e:
-            raise ConfigParsingException("Error parsing config from data: ", e)
-        raise ConfigParsingException("Format not allowed: " + data_type)
-
-    @staticmethod
-    def correct_path(path):
-        path = re.split('[/\\\\]+', path)
-        return os.sep.join(path)
-
-    @staticmethod
-    def decode(text, lower=False):
-        if not text:
-            return
-        try:
-            text = text.decode()
-        except:
-            pass
-
-        text = str(text).strip()
-        return text.lower() if lower else text
-
-    @staticmethod
-    def compare_str(a, b):
-        return Parser.decode(a, True) == Parser.decode(b, True)
+    def get_logger(name='main'):
+        current = logging.getLoggerClass()
+        logging.setLoggerClass(PiLogger)
+        custom = logging.getLogger(name)
+        logging.setLoggerClass(current)
+        return custom
 
 
+class PiLogger(logging.Logger):
 
-class ConfigParsingException(Exception):
-    __name__ = "ConfigParsingException"
+    def __init__(self, name):
+        logging.Logger.__init__(self, name)
+        self.logger = super(PiLogger, self)
 
-    def __init__(self, message, error=None):
-        Exception.__init__(self)
-        self.args = (message,)
-        self.message = message
-        self.error = error
+    def exc_detail(self, e, extra_msg='', chain=None):
+        errors = []
+        if chain:
+            errors.extend([parse_exception(e) for e in as_list(chain)])
+        errors.append(parse_exception(e, extra_msg))
+        for e in errors:
+            self.error("-----------------------")
+            self.log_list(e, logging.ERROR)
+            self.error("-----------------------")
+
+    def log_list(self, list, level=logging.INFO):
+        list = as_list(list)
+        for l in list:
+            super().log(level, l)
+
+    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False):
+        super()._log(level, msg, args, exc_info=None, extra=None, stack_info=False)
+        sys.stdout.flush()
+        for h in logging.getLogger().handlers:
+            h.flush()

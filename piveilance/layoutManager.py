@@ -13,7 +13,7 @@ from piveilance.util import *
 class LayoutManager(QObject):
     setCamOptions = pyqtSignal(object)
 
-    def __init__(self, widget, grid, camConfig, layoutConfig):
+    def __init__(self, widget, grid, config):
         super(LayoutManager, self).__init__()
 
         self.camIds = []

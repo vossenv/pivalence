@@ -8,7 +8,6 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QPixmap, QImage, QMovie
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
-from piveilance.config import Parser
 from piveilance.util import ImageManip
 
 
@@ -33,7 +32,7 @@ class Camera(QLabel):
     def setOptions(self, options):
         self.options = deepcopy(options)
         for o, v in self.options.get_dict('overrides').items():
-            if Parser.compare_str(o, self.name):
+            if compare_str(o, self.name):
                 self.options.update(v)
                 break
 

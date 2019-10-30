@@ -26,14 +26,6 @@ def cli():
               help="point to config ini by name",
               type=click.Path(exists=True),
               default=None, )
-@click.option('-f', '--fullscreen',
-              help="toggle fullscreen",
-              is_flag=True,
-              default=None)
-@click.option('-s', '--stretch',
-              help="toggle stretch",
-              is_flag=True,
-              default=None)
 def start(ctx, **kwargs):
     app = QApplication(sys.argv)
     _ = PiWndow(ctx, **kwargs)
@@ -51,34 +43,20 @@ class PiWndow(QMainWindow):
         stylesheet = get_resource("styles.qss")
         icon = get_resource("icon.ico")
 
-        cliArgs, configFile = self.parseCLIArgs(cli_options)
-        self.config = Config.from_yaml(configFile).merge(cliArgs)
-        self.camConfig = self.config.get_config('cameras')
-        self.viewConfig = self.config.get_config('view')
-        self.layoutConfig = self.config.get_config('layout')
-
-        self.initWindow(stylesheet, title, icon)
-        self.layoutManager = LayoutManager(self.widget, self.grid, self.camConfig, self.layoutConfig)
-        self.resized.connect(self.layoutManager.resizeEventHandler)
-        self.showFullScreen() if self.fullscreen else self.show()
-
-    def parseCLIArgs(self, cli_options):
-
-        configFile = cli_options.get('config') or "config.yaml"
+        configFile = cli_options.get('config') or "default_config.yaml"
         if not exists(configFile):
             shutil.copy(get_resource(configFile), ".")
 
-        cli = {}
-        for o in cli_options:
-            v = cli_options[o]
-            if not v:
-                continue
-            elif v and o in ['fullscreen']:
-                Config.merge_dict(cli, Config.make_dict(['view', o], v))
-            elif v and o in ['stretch']:
-                Config.merge_dict(cli, Config.make_dict(['cameras', o], v))
+        self.config = Config.from_yaml(configFile)
+        # self.camConfig = self.config.get_config('cameras')
+        # self.viewConfig = self.config.get_config('view')
+        # self.layoutConfig = self.config.get_config('layout')
 
-        return cli, configFile
+        self.initWindow(stylesheet, title, icon)
+        self.layoutManager = LayoutManager(self.widget, self.grid, self.config)
+        self.resized.connect(self.layoutManager.resizeEventHandler)
+        self.showFullScreen() if self.fullscreen else self.show()
+
 
     def initWindow(self, stylesheet, title, icon):
         self.fullscreen = self.viewConfig.get_bool('fullscreen', False)

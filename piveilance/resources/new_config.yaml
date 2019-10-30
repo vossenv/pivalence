@@ -1,52 +1,103 @@
-view:
-  fullscreen: false
 
-layout:
-  max_allowed: 0
-  list_refresh: 10
-  style: fixed
-  fixed:
-  cols: 3
-  rows: 3
-  positions:
-    living_room: (1,3)
-    deleteme: (1,1)
+configuration:
+  layout: simple
+  generator: default
+  view: default
 
-
+views:
+  - id: default
+    fullscreen: false
+    stretch: false
+    font_ratio: 0.025
+    labels: true
 
 cameras:
-  type: PiCamGenerator
-  #type: dummy.DummyGenerator
-  crop_ratio: 0.2
-  initial_size: 300
-  direction: right
-  stretch: false
-  data_url: http://192.168.50.139:9001/cameras/next
-  update_interval: 0.1
-  list_refresh: 10
-  font_ratio: 0.025
-  labels: true
+  - id: living_room
+    name: "Living Room"
+    crop_ratio: 0.8
+    direction: hcenter
 
-  overrides:
-    living_room:
-      crop_ratio: 0.8
-      direction: hcenter
-      order: 1
-    garage:
-      crop_ratio: 0.8
-      direction: hcenter
-      order: 5
-    front_bottom:
-      order: 8
-    front_top:
-      order: 4
-#    catpod:
-#      order: 7
-#    back_top:
-     # order: 3
-#    garage_side:
-#      order:  6
-#    back_bottom:
-#      order: 2
+  - id: garage
+    name: "Garage"
+    crop_ratio: 0.8
+    direction: hcenter
+
+layouts:
+  - id: default
+    style: fixed
+    cols: 3
+    rows: 3
+    max_allowed: 0
+    cameras:
+      - id: living_room
+        position: (1,3)
+      - id: garage
+        position: (1,3)
+
+  - id: simple
+    style: flow
+    cameras:
+      - id: living_room
+        order: 1
+      - id: garage
+        order: 2
+
+generators:
+  - id: default
+    type: PiCamGenerator
+    data_url: http://192.168.50.139:9001/cameras/next
+    update_interval: 0.1
+    list_refresh: 10
+
+
+
+
+      #cameras:
+      #  default:
+      #    crop_ratio: 0.2
+      #    crop_direction: right
+      #  living_room:
+      #    crop_ratio: 0.8
+      #    direction: hcenter
+      #  garage:
+      #    crop_ratio: 0.8
+      #    direction: hcenter
+      #
+      #
+      #
+      #      #cameras1:
+      #  type: PiCamGenerator
+      #  #type: dummy.DummyGenerator
+      #  crop_ratio: 0.2
+      #  initial_size: 300
+      #  direction: right
+      #  stretch: false
+      #  data_url: http://192.168.50.139:9001/cameras/next
+      #  update_interval: 0.1
+      #  list_refresh: 10
+      #  font_ratio: 0.025
+      #  labels: true
+      #
+      #  overrides:
+      #    living_room:
+      #      crop_ratio: 0.8
+      #      direction: hcenter
+      #      order: 1
+      #    garage:
+      #      crop_ratio: 0.8
+      #      direction: hcenter
+      #      order: 5
+      #    front_bottom:
+      #      order: 8
+      #    front_top:
+      #      order: 4
+    #    catpod:
+    #      order: 7
+    #    back_top:
+    # order: 3
+  #    garage_side:
+  #      order:  6
+  #    back_bottom:
+  #      order: 2
 
   #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'

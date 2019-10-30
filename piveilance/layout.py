@@ -1,6 +1,6 @@
 import math
 
-from piveilance.config import Parser
+from piveilance.util import parse_collection
 
 
 def parseLayout(style):
@@ -96,7 +96,7 @@ class FixedLayout():
 
         fixedCoords = cls.config.get_dict('positions', {})
 
-        x =  {Parser.parse_collection(v): k for k, v in fixedCoords.items()}
+        x =  {parse_collection(v): k for k, v in fixedCoords.items()}
 
         for c in WindowGeometry.grid:
 
