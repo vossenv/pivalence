@@ -12,19 +12,26 @@ views:
     labels: true
 
 cameras:
+  - id: default
+    type: PiCam
+    crop_ratio: 0.2
+    direction: right
+
   - id: living_room
+    type: PiCam
     name: "Living Room"
     crop_ratio: 0.8
     direction: hcenter
 
   - id: garage
+    type: PiCam
     name: "Garage"
     crop_ratio: 0.8
     direction: hcenter
 
 layouts:
   - id: default
-    style: fixed
+    style_name: fixed
     cols: 3
     rows: 3
     max_allowed: 0
@@ -35,7 +42,8 @@ layouts:
         position: (1,3)
 
   - id: simple
-    style: flow
+    style_name: flow
+    max_allowed: 0
     cameras:
       - id: living_room
         order: 1

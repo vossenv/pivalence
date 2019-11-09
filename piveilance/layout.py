@@ -1,13 +1,34 @@
 import math
 
-from piveilance.util import parse_collection
+from piveilance.util import parse_collection, parse_type
 
+
+class Layout:
+
+    def __init__(self,
+                 id="unidentified",
+                 styleName='flow',
+                 cols=3,
+                 rows=3,
+                 maxAllowed=0,
+                 cameras=None):
+
+        self.id = parse_type(id, str)
+        self.styleName = parse_type(styleName, str)
+        self.cols = parse_type(cols, int)
+        self.rows = parse_type(rows, int)
+        self.maxAllowed = max(parse_type(maxAllowed, int), 0)
+        self.cameras = parse_type(cameras, list)
+        self.style = parseLayout(self.styleName)
+
+    def calculate(self, *args):
+        return self.style.calculate(*args)
 
 def parseLayout(style):
-    return FixedLayout if style == 'fixed' else FlowLayout
+    return FixedLayoutStyle if style == 'fixed' else FlowLayoutStyle
 
 
-class FlowLayout():
+class FlowLayoutStyle():
 
     @classmethod
     def calculate(cls, width, height, camCount):
@@ -39,7 +60,7 @@ class FlowLayout():
         return {c.name: c for c in cams}
 
 
-class FixedLayout():
+class FixedLayoutStyle():
     config = None
 
     @classmethod
@@ -96,10 +117,9 @@ class FixedLayout():
 
         fixedCoords = cls.config.get_dict('positions', {})
 
-        x =  {parse_collection(v): k for k, v in fixedCoords.items()}
+        x = {parse_collection(v): k for k, v in fixedCoords.items()}
 
         for c in WindowGeometry.grid:
-
             print()
 
         # remainingCoords = set(WindowGeometry.grid.copy())

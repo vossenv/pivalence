@@ -19,7 +19,13 @@ class Config(UserDict):
             self.env_overrides()
 
     def get_sub_config(self, name):
-        return Config(self.get(name, {}))
+        try:
+            config = self if name else {}
+            for k in as_list(name):
+                config = config[k]
+        except KeyError as e:
+            raise ValueError("Subkey does not exist: " + str(e))
+        return Config(config)
 
     def get_as(self, name, default=None, required=False, as_type=None):
         val = self.get(name, default)
@@ -31,19 +37,19 @@ class Config(UserDict):
         val = self.get_as(name, default, required)
         return str(val).lower() in ['true', '1']
 
-    def get_string(self, name, default=False, required=False):
+    def get_string(self, name, default=None, required=False):
         return self.get_as(name, default, required, str)
 
-    def get_int(self, name, default=False, required=False):
+    def get_int(self, name, default=None, required=False):
         return self.get_as(name, default, required, int)
 
-    def get_float(self, name, default=False, required=False):
+    def get_float(self, name, default=None, required=False):
         return self.get_as(name, default, required, float)
 
-    def get_list(self, name, default=False, required=False):
+    def get_list(self, name, default=None, required=False):
         return self.get_as(name, default, required, list)
 
-    def get_dict(self, name, default=False, required=False):
+    def get_dict(self, name, default=None, required=False):
         return self.get_as(name, default, required, dict)
 
     def merge(self, update):
@@ -112,6 +118,33 @@ class Config(UserDict):
             else:
                 d1[k] = d2[k]
         return d1
+
+
+class ConfigLoader:
+
+    def __init__(self, path):
+        self.config = Config.from_yaml(path)
+
+    def loadGlobalConfig(self):
+
+        globalConfig = Config({})
+        globalConfig['configuration'] = self.config.get_dict('configuration')
+        globalConfig['cameras'] = self.get_iter_as_dict('cameras', 'id', required=True)
+        globalConfig['generators'] = self.get_iter_as_dict('generators', 'id', required=True)
+        globalConfig['views'] = self.get_iter_as_dict('views', 'id', required=True)
+        globalConfig['layouts'] = self.get_iter_as_dict('layouts', 'id', required=True)
+        return globalConfig
+
+    def get_iter_as_dict(self, name, keyname, default=None, required=False):
+
+        value = self.config.get(name, default)
+        if not value and required:
+            raise ValueError("'{}': config cannot be empty.".format(name))
+
+        try:
+            return {i[keyname]: i for i in value}
+        except KeyError:
+            raise ValueError("Invalid key attribute for '{}': '{}'".format(name, keyname))
 
 
 class FormattedDumper(yaml.Dumper):

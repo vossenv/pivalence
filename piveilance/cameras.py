@@ -8,33 +8,41 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QPixmap, QImage, QMovie
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
-from piveilance.util import ImageManip
+from piveilance.config import Config
+from piveilance.util import ImageManip, compare_str
 
+
+def parseCameraType(cameraType):
+    if cameraType == 'PiCam':
+        return PiCamera
+    elif cameraType == 'Placeholder':
+        return PlaceholderCamera
+    elif cameraType == "DummyCam":
+        return DummyCamera
+    else:
+        raise ValueError("No such camera type: " + cameraType)
 
 class Camera(QLabel):
-    def __init__(self,
-                 name="default",
-                 options=None,
-                 parent=None):
-        super(Camera, self).__init__(parent)
-        self.setStaticOptions(name, options)
+    def __init__(self, **kwargs):
+        super(Camera, self).__init__(None)
+        self.setStaticOptions(Config(kwargs))
 
-    def setStaticOptions(self, name, options):
+    def setStaticOptions(self, options):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(QSize(50, 50))
         self.label = QLabel()
         self.pixmap = None
-        self.name = name
+        self.id = options['id']
         self.movie = None
         self.setOptions(options)
 
     @pyqtSlot(object, name="reconfigure")
     def setOptions(self, options):
         self.options = deepcopy(options)
-        for o, v in self.options.get_dict('overrides').items():
-            if compare_str(o, self.name):
-                self.options.update(v)
-                break
+        # for o, v in self.options.get_dict('overrides').items():
+        #     if compare_str(o, self.id):
+        #         self.options.update(v)
+        #         break
 
         self.crop_ratio = self.options.get_float('crop_ratio')
         if self.crop_ratio < 0 or self.crop_ratio > 1:
@@ -42,11 +50,11 @@ class Camera(QLabel):
 
         self.position = self.options.get('position', None)
         self.order = self.options.get('order', None)
-        self.size = self.options.get_int('size')
+        self.size = self.options.get_int('size', 50)
         self.showLabel = self.options.get_bool('labels', True)
         self.font_ratio = self.options.get_float('font_ratio', 0.4)
-        self.direction = self.options.get_string('direction', 'right', decode=True)
-        self.setScaledContents(self.options.get_bool('stretch'))
+        self.direction = self.options.get_string('direction', 'right')
+        self.setScaledContents(self.options.get_bool('stretch', False))
         self.setFrameSize()
         self.setLabel()
 
@@ -55,7 +63,7 @@ class Camera(QLabel):
             self.setPixmap(self.pixmap.scaled(self.size, self.size))
 
     def setLabel(self):
-        self.label.setText(self.name if self.showLabel else "")
+        self.label.setText(self.id if self.showLabel else "")
         self.label.setFont(QFont("Arial", self.font_ratio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setStyleSheet("color: #05FF00;"
@@ -67,13 +75,13 @@ class Camera(QLabel):
 
 
 class PiCamera(Camera):
-    def __init__(self, name="default", options=None, parent=None):
-        super(PiCamera, self).__init__(name, options, parent)
+    def __init__(self, **kwargs):
+        super(PiCamera, self).__init__(**kwargs)
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
-        if self.name in camData:
-            data = self.getImage(camData[self.name]['image'])
+        if self.id in camData:
+            data = self.getImage(camData[self.id]['image'])
             img = QImage()
             img.loadFromData(data)
             if self.crop_ratio != 0:
@@ -90,8 +98,8 @@ class PiCamera(Camera):
 
 
 class DummyCamera(Camera):
-    def __init__(self, name="default", options=None, parent=None):
-        super(DummyCamera, self).__init__(name, options, parent)
+    def __init__(self, id="default", options=None, parent=None):
+        super(DummyCamera, self).__init__(id, options, parent)
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
@@ -109,8 +117,8 @@ class DummyCamera(Camera):
 
 
 class PlaceholderCamera(Camera):
-    def __init__(self, name="default", position=None, options=None, parent=None):
-        super(PlaceholderCamera, self).__init__(name, options, parent)
+    def __init__(self, id="default", position=None, options=None, parent=None):
+        super(PlaceholderCamera, self).__init__(id, options, parent)
         self.position = position
         self.setImage()
 
