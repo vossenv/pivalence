@@ -9,7 +9,7 @@ views:
     fullscreen: false
     stretch: false
     font_ratio: 0.025
-    labels: true
+    labels: false
 
 cameras:
   - id: default
@@ -54,7 +54,7 @@ generators:
   - id: default
     type: PiCamGenerator
     data_url: http://192.168.50.139:9001/cameras/next
-    update_interval: 0.1
+    update_interval: .1
     list_refresh: 10
 
 

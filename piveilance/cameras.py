@@ -48,22 +48,24 @@ class Camera(QLabel):
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
 
+        self.name = self.options.get('name', self.id)
         self.position = self.options.get('position', None)
         self.order = self.options.get('order', None)
         self.size = self.options.get_int('size', 50)
-        self.showLabel = self.options.get_bool('labels', True)
+        self.showLabel = self.options.get_bool('labels', False)
         self.font_ratio = self.options.get_float('font_ratio', 0.4)
         self.direction = self.options.get_string('direction', 'right')
         self.setScaledContents(self.options.get_bool('stretch', False))
         self.setFrameSize()
         self.setLabel()
 
+
     def setFrameSize(self):
         if self.pixmap:
             self.setPixmap(self.pixmap.scaled(self.size, self.size))
 
     def setLabel(self):
-        self.label.setText(self.id if self.showLabel else "")
+        self.label.setText(self.name if self.showLabel else "")
         self.label.setFont(QFont("Arial", self.font_ratio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setStyleSheet("color: #05FF00;"

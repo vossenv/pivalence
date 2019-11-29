@@ -1,12 +1,12 @@
 import random
-import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
 import piveilance.generators
+import piveilance.generators
 from piveilance.cameras import PlaceholderCamera, parseCameraType
-from piveilance.layout import WindowGeometry, parseLayout, Layout
+from piveilance.layout import WindowGeometry, Layout, View
 from piveilance.util import *
 
 
@@ -29,35 +29,14 @@ class LayoutManager(QObject):
 
         self.setLayout(layout_id)
         self.setGenerator(generator_id)
+        self.setView(view_id)
+
 
 
         print()
 
-
-
-
-
-
-
-
-
-
-
-
       # self.maxCams = max(int(self.layoutConfig.get('max_allowed', 0)), 0)
      #   self.setLayoutSyle(parseLayout(self.layoutConfig.get('style', 'flow')))
-
-
-
-        #
-        # self.cameraConfig = config.get_iter_as_dict('cameras', 'id', {})
-        # self.generatorConfig = config.get_iter_as_dict('generators', 'id', {})
-        # self.viewConfig = config.get_iter_as_dict('viewss', 'id', {})
-
-       # self.setGenerator(self.generatorConfig)
-
-
-
         #self.camConfig = camConfig
         #self.layoutConfig = layoutConfig
       #  self.refresh = layoutConfig.get_float('list_refresh', 10)
@@ -77,7 +56,7 @@ class LayoutManager(QObject):
     @pyqtSlot(object, name="data")
     def recieveData(self, data, triggerRedraw=False):
 
-        if (not self.camIds or time.time() - self.start > self.refresh):
+        if (not self.camIds or time.time() - self.start > self.generator.listRefresh):
             newCams = list(data.keys())
             if newCams and not compareIter(newCams, self.camIds):
                 triggerRedraw = True
@@ -88,23 +67,28 @@ class LayoutManager(QObject):
                 self.arrange(True)
 
     def arrange(self, triggerRedraw=False):
-        # if not self.camIds:
-        #     return
+        if not self.camIds:
+            return
 
         preCols = WindowGeometry.cols
         self.updateWindowGeometry()
 
         if triggerRedraw or WindowGeometry.cols != preCols:
             c = {n: self.generator.createCamera(n) for n in self.camIds}
-            self.camObj = self.layout.buildLayout(c, self.getPlaceholder)
+            self.camObj = self.layout.style.buildLayout(c, self.getPlaceholder)
             self.clearLayout()
 
             for n, c in self.camObj.items():
                 self.grid.addWidget(c, *c.position)
                 self.grid.addWidget(c.label, *c.position)
-                self.setCamOptions.connect(c.setOptions)
 
-        self.setCamOptions.emit(self.camConfig)
+              #  self.setCamOptions.connect(c.setOptions)
+
+        for c in self.camObj.values():
+            c.size = WindowGeometry.frameSize
+            c.setFrameSize()
+
+       # self.setCamOptions.emit(self.globalConfig['cameras'])
 
     def getPlaceholder(self, name, position=None):
         return PlaceholderCamera(name, position, self.camConfig)
@@ -119,13 +103,16 @@ class LayoutManager(QObject):
     def setLayoutSyle(self, layoutStyle):
         self.layout.style = layoutStyle
 
+    def setView(self, viewId):
+        self.view = self.getView(viewId)
+
     def setGenerator(self, generatorId):
         self.generator = self.getGenerator(generatorId)
         self.generator.updateCameras.connect(self.recieveData)
         self.generator.start()
 
     def setContentMargin(self, margins):
-        m = margins if not self.camConfig.get_bool('stretch') else (0, 0, 0, 0)
+        m = margins if not self.view.stretch else (0, 0, 0, 0)
         self.grid.setContentsMargins(*m)
 
     def updateWindowGeometry(self):
@@ -147,6 +134,13 @@ class LayoutManager(QObject):
         newLayout['maxAllowed'] = newLayout.pop('max_allowed', None)
         return Layout(**newLayout)
 
+    def getView(self, viewId):
+        view = self.globalConfig['views'].get(viewId)
+        if not view:
+            raise ValueError("No view found for id: '{}'".format(viewId))
+        view['fontRatio'] = view.pop('font_ratio', None)
+        return View(**view)
+
     def getGenerator(self, generatorId):
 
         generatorConfig = self.globalConfig['generators'].get(generatorId)
@@ -156,7 +150,7 @@ class LayoutManager(QObject):
         generatorConfig['dataUrl'] = generatorConfig.pop('data_url', None)
         generatorConfig['updateInterval'] = generatorConfig.pop('update_interval', None)
         generatorConfig['listRefresh'] = generatorConfig.pop('list_refresh', None)
-        generatorConfig['getCamera'] = self.getCamera
+        generatorConfig['cameraRepo'] = self.globalConfig['cameras']
 
         try:
             generatorType = getattr(piveilance.generators, generatorConfig['type'])
@@ -167,16 +161,3 @@ class LayoutManager(QObject):
                              "Allowed are [PiCamGenerator]".format(generatorConfig['type']))
         return generatorType(**generatorConfig)
 
-    def getCamera(self, cameraId):
-        cameraConfig = self.globalConfig['cameras'].get(cameraId)
-        if not cameraConfig:
-            raise ValueError("No camera found for id: '{}'".format(cameraId))
-        if 'type' not in cameraConfig:
-            raise ValueError("Missing required parameter: type.  Valid are [PiCam, DummyCam, Placeholder]")
-        camType = parseCameraType(cameraConfig['type'])
-
-        c = camType(**cameraConfig)
-
-        print()
-
-        return c

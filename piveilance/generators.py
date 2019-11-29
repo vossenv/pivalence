@@ -11,11 +11,11 @@ from piveilance.util import parse_type
 class Generator(QThread):
     updateCameras = pyqtSignal(object)
 
-    def __init__(self, id=None, updateInterval=None, getCamera=None, parent=None, **kwargs):
+    def __init__(self, id=None, updateInterval=None, cameraRepo=None, parent=None, **kwargs):
         super(Generator, self).__init__(parent)
-        self.id = id
-        self.getCamera = getCamera
-        self.updateInterval = updateInterval
+        self.id = parse_type(id, str)
+        self.cameraRepo = parse_type(cameraRepo, dict)
+        self.updateInterval = parse_type(updateInterval, float)
 
     def update(self):
         pass
@@ -25,10 +25,15 @@ class Generator(QThread):
             self.update()
             time.sleep(self.updateInterval)
 
-    def createCamera(self, name):
-        cam = self.camClass(name, self.camConfig)
+    def createCamera(self, camId):
+        cameraConfig = self.cameraRepo.get(camId)
+        if not cameraConfig:
+            cameraConfig = self.cameraRepo.get('default')
+            cameraConfig['id'] = camId
+        cam = self.camType(**cameraConfig)
         self.updateCameras.connect(cam.setImage)
         return cam
+
 
 
 class PiCamGenerator(Generator):
@@ -37,13 +42,16 @@ class PiCamGenerator(Generator):
         super(PiCamGenerator, self).__init__(**kwargs)
         self.dataUrl = parse_type(kwargs.get('dataUrl'), str)
         self.listRefresh = parse_type(kwargs.get('listRefresh', 10), float)
+        self.camType = PiCamera
 
     def update(self):
-        img = requests.get(self.dataUrl)
-        data = json.loads(img.content)
-        camData = {v['source']: v for v in data}
-        self.updateCameras.emit(camData)
-
+        try:
+            img = requests.get(self.dataUrl)
+            data = json.loads(img.content)
+            camData = {v['source']: v for v in data}
+            self.updateCameras.emit(camData)
+        except Exception as e:
+            print(str(e)) # need to handle
 
 # class DummyGenerator(Generator):
 #

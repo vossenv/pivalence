@@ -207,3 +207,18 @@ class WindowGeometry():
         for k, v in values.items():
             if v is not None:
                 setattr(cls, k, v)
+
+
+class View():
+
+    def __init__(self,
+                 id,
+                 fullscreen,
+                 stretch,
+                 fontRatio,
+                 labels):
+        self.id = parse_type(id, str)
+        self.fullscreen = parse_type(fullscreen, bool)
+        self.stretch = parse_type(stretch, bool)
+        self.font_ratio = parse_type(fontRatio, float)
+        self.labels = parse_type(labels, bool)
