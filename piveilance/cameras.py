@@ -73,6 +73,9 @@ class Camera(QLabel):
     def setImage(self, camData=None):
         pass
 
+    def defaultCamera(self):
+        pass
+
 
 class PiCamera(Camera):
     def __init__(self, **kwargs):

@@ -5,7 +5,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
 import piveilance.generators
 import piveilance.generators
-from piveilance.cameras import PlaceholderCamera, parseCameraType
+from piveilance.cameras import PlaceholderCamera
 from piveilance.layout import WindowGeometry, Layout, View
 from piveilance.util import *
 
@@ -21,7 +21,6 @@ class LayoutManager(QObject):
         self.widget = widget
         self.grid = grid
 
-
         self.globalConfig = config
         layout_id = config['configuration']['layout']
         generator_id = config['configuration']['generator']
@@ -31,31 +30,12 @@ class LayoutManager(QObject):
         self.setGenerator(generator_id)
         self.setView(view_id)
 
-
-
-        print()
-
-      # self.maxCams = max(int(self.layoutConfig.get('max_allowed', 0)), 0)
-     #   self.setLayoutSyle(parseLayout(self.layoutConfig.get('style', 'flow')))
-        #self.camConfig = camConfig
-        #self.layoutConfig = layoutConfig
-      #  self.refresh = layoutConfig.get_float('list_refresh', 10)
-      #  self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
-      #  self.generatorType = getattr(piveilance.generators, self.camConfig.get('type', 'PiCamGenerator'))
-    #    self.setLayout(parseLayout(layoutConfig.get('style', 'flow')))
-    #     self.generator = self.generatorType(self.camConfig)
-    #     self.generator.updateCameras.connect(self.recieveData)
-    #     self.generator.start()
-
-
-
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
         self.arrange(triggerRedraw)
 
     @pyqtSlot(object, name="data")
     def recieveData(self, data, triggerRedraw=False):
-
         if (not self.camIds or time.time() - self.start > self.generator.listRefresh):
             newCams = list(data.keys())
             if newCams and not compareIter(newCams, self.camIds):
@@ -177,4 +157,3 @@ class LayoutManager(QObject):
             raise ValueError("Invalid generator type specified: '{}'.  "
                              "Allowed are [PiCamGenerator]".format(generatorConfig['type']))
         return generatorType(**generatorConfig)
-

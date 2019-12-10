@@ -93,7 +93,7 @@ class PiWndow(QMainWindow):
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
         labelAct = cmenu.addAction("Toggle labels")
-        #
+        
         # layoutMenu = cmenu.addMenu("Layout")
         # flowAct = layoutMenu.addAction("Flow")
         # fixedAct = layoutMenu.addAction("Fixed")
@@ -107,16 +107,9 @@ class PiWndow(QMainWindow):
             a = maxMenu.addAction(str(e))
             a.name = "limit"
             a.value = e
-        #
-        # cropMenu = cmenu.addMenu("Crop ratio")
-        # entries = [float(i / 10) for i in range(0, 11)]
-        # for e in entries:
-        #     a = cropMenu.addAction(str(e))
-        #     a.name = "crop"
-        #     a.value = e
-        #
+
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
-        #
+
         if action == quitAct:
             qApp.quit()
         elif action == fullScreenAct:
@@ -140,9 +133,6 @@ class PiWndow(QMainWindow):
             self.layoutManager.setLabelMode(not current)
 
         elif hasattr(action, 'name'):
-            #if action.name == "crop":
-                # self.camConfig['crop_ratio'] = action.value
-                # self.layoutManager.arrange()
             if action.name == "limit":
                 v = action.value
                 self.layoutManager.setMaxCams(0 if v == "Unlimited" else v)
