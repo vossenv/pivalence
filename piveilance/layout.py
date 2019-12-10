@@ -24,6 +24,8 @@ class Layout:
     def calculate(self, *args):
         return self.style.calculate(*args)
 
+    def layoutProperties(self, **kwargs):
+
 
 def parseLayout(style):
     return FixedLayoutStyle if style == 'fixed' else FlowLayoutStyle
@@ -116,6 +118,8 @@ class FixedLayoutStyle():
             return {}
 
         newList = {}
+
+        z = getPlaceholder('no')
 
         fixedCoords = cls.config.get_dict('positions', {})
 

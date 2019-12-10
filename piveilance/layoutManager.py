@@ -87,8 +87,8 @@ class LayoutManager(QObject):
         except KeyError:
             raise ValueError("Camera " + id + " does not exist")
 
-    def getPlaceholder(self, name, position=None):
-        return PlaceholderCamera(name, position, self.camConfig)
+    def getPlaceholder(self, id, name=None, position=None):
+        return PlaceholderCamera(id=id, name=name or id, position=position)
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):

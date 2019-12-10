@@ -35,7 +35,7 @@ class Camera(QLabel):
         self.id = options['id']
         self.movie = None
 
-        self.crop_ratio = options.get_float('crop_ratio')
+        self.crop_ratio = options.get_float('crop_ratio', 0)
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
 
@@ -120,9 +120,9 @@ class DummyCamera(Camera):
 
 
 class PlaceholderCamera(Camera):
-    def __init__(self, id="default", position=None, options=None, parent=None):
-        super(PlaceholderCamera, self).__init__(id, options, parent)
-        self.position = position
+
+    def __init__(self,  **kwargs):
+        super(PlaceholderCamera, self).__init__(**kwargs)
         self.setImage()
 
     def setFrameSize(self):

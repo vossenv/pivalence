@@ -1,6 +1,6 @@
 
 configuration:
-  layout: simple
+  layout: default
   generator: default
   view: default
 
