@@ -1,7 +1,6 @@
 import base64
 import random
 import time
-from copy import deepcopy
 
 from PyQt5.QtCore import pyqtSlot, QSize, Qt
 from PyQt5.QtGui import QFont
@@ -9,7 +8,7 @@ from PyQt5.QtGui import QPixmap, QImage, QMovie
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
 from piveilance.config import Config
-from piveilance.util import ImageManip, compare_str
+from piveilance.util import ImageManip
 
 
 def parseCameraType(cameraType):
@@ -21,6 +20,7 @@ def parseCameraType(cameraType):
         return DummyCamera
     else:
         raise ValueError("No such camera type: " + cameraType)
+
 
 class Camera(QLabel):
     def __init__(self, **kwargs):
@@ -34,38 +34,36 @@ class Camera(QLabel):
         self.pixmap = None
         self.id = options['id']
         self.movie = None
-        self.setOptions(options)
 
-    @pyqtSlot(object, name="reconfigure")
-    def setOptions(self, options):
-        self.options = deepcopy(options)
-        # for o, v in self.options.get_dict('overrides').items():
-        #     if compare_str(o, self.id):
-        #         self.options.update(v)
-        #         break
-
-        self.crop_ratio = self.options.get_float('crop_ratio')
+        self.crop_ratio = options.get_float('crop_ratio')
         if self.crop_ratio < 0 or self.crop_ratio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
 
-        self.name = self.options.get('name', self.id)
-        self.position = self.options.get('position', None)
-        self.order = self.options.get('order', None)
-        self.size = self.options.get_int('size', 50)
-        self.showLabel = self.options.get_bool('labels', False)
-        self.font_ratio = self.options.get_float('font_ratio', 0.4)
-        self.direction = self.options.get_string('direction', 'right')
-        self.setScaledContents(self.options.get_bool('stretch', False))
+        self.name = options.get('name', self.id)
+        self.position = options.get('position', None)
+        self.order = options.get('order', None)
+        self.size = options.get_int('size', 50)
+        self.show_labels = options.get_bool('show_labels', False)
+        self.font_ratio = options.get_float('font_ratio', 0.025)
+        self.direction = options.get_string('direction', 'right')
+        self.stretch = options.get_bool('stretch', False)
+        self.setOptions({})
+
+    @pyqtSlot(dict, name="updateCamOptions")
+    def setOptions(self, options):
+        # validate ?
+        vars(self).update(options)
+        self.setScaledContents(self.stretch)
         self.setFrameSize()
         self.setLabel()
-
 
     def setFrameSize(self):
         if self.pixmap:
             self.setPixmap(self.pixmap.scaled(self.size, self.size))
 
     def setLabel(self):
-        self.label.setText(self.name if self.showLabel else "")
+        # fit text if too big
+        self.label.setText(self.name if self.show_labels else "")
         self.label.setFont(QFont("Arial", self.font_ratio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setStyleSheet("color: #05FF00;"

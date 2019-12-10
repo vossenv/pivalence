@@ -55,9 +55,10 @@ class FlowLayoutStyle():
     def buildLayout(cls, camList, *args):
 
         cams = sorted(camList.values(), key=lambda x: x.order or len(camList) + 1)
-        for i, c in enumerate(cams[0: WindowGeometry.numCams]):
+        cams = cams[0: WindowGeometry.numCams]
+        for i, c in enumerate(cams):
             c.position = WindowGeometry.grid[i]
-        return {c.name: c for c in cams}
+        return {c.id: c for c in cams}
 
 
 class FixedLayoutStyle():
@@ -222,3 +223,10 @@ class View():
         self.stretch = parse_type(stretch, bool)
         self.font_ratio = parse_type(fontRatio, float)
         self.labels = parse_type(labels, bool)
+
+    def getCamGlobals(self):
+        return {
+           'stretch': self.stretch,
+           'font_ratio': self.font_ratio,
+           'show_labels': self.labels
+        }

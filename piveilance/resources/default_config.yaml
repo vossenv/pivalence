@@ -9,7 +9,7 @@ views:
     fullscreen: false
     stretch: false
     font_ratio: 0.025
-    labels: false
+    labels: true
 
 cameras:
   - id: default
@@ -43,7 +43,7 @@ layouts:
 
   - id: simple
     style_name: flow
-    max_allowed: 0
+    max_allowed: 3
     cameras:
       - id: living_room
         order: 1

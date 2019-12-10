@@ -81,14 +81,24 @@ class LayoutManager(QObject):
             for n, c in self.camObj.items():
                 self.grid.addWidget(c, *c.position)
                 self.grid.addWidget(c.label, *c.position)
+                self.setCamOptions.connect(c.setOptions)
 
-              #  self.setCamOptions.connect(c.setOptions)
+        camOpts = self.view.getCamGlobals()
+        camOpts['size'] = WindowGeometry.frameSize
+        self.setGlobalCamOptions(camOpts)
 
-        for c in self.camObj.values():
-            c.size = WindowGeometry.frameSize
-            c.setFrameSize()
+    def setMaxCams(self, max):
+        self.layout.maxAllowed = max
+        self.arrange(True)
 
-       # self.setCamOptions.emit(self.globalConfig['cameras'])
+    def setGlobalCamOptions(self, options):
+        self.setCamOptions.emit(options)
+
+    def setTargetCamOptions(self, id, options):
+        try:
+            self.camObj['id'].setOptions(options)
+        except KeyError:
+            raise ValueError("Camera " + id + " does not exist")
 
     def getPlaceholder(self, name, position=None):
         return PlaceholderCamera(name, position, self.camConfig)
@@ -102,6 +112,14 @@ class LayoutManager(QObject):
 
     def setLayoutSyle(self, layoutStyle):
         self.layout.style = layoutStyle
+
+    def setStretchMode(self, toggle):
+        self.view.stretch = toggle
+        self.arrange()
+
+    def setLabelMode(self, toggle):
+        self.view.labels = toggle
+        self.arrange()
 
     def setView(self, viewId):
         self.view = self.getView(viewId)
@@ -123,7 +141,6 @@ class LayoutManager(QObject):
         WindowGeometry.update(width=w, height=h, numCams=n)
         WindowGeometry.update(**self.layout.calculate(w, h, n))
         WindowGeometry.calculateAllProperties()
-       # self.camConfig['size'] = WindowGeometry.frameSize
         self.setContentMargin(WindowGeometry.margins)
 
     def getLayout(self, layoutId):
