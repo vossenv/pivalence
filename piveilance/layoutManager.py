@@ -54,7 +54,7 @@ class LayoutManager(QObject):
         self.updateWindowGeometry()
 
         if triggerRedraw or WindowGeometry.cols != preCols:
-            c = {n: self.generator.createCamera(n) for n in self.camIds}
+            c = {n: self.setCamLayoutFields(self.generator.createCamera(n)) for n in self.camIds}
             self.camObj = self.layout.style.buildLayout(c, self.getPlaceholder)
             self.clearLayout()
 
@@ -66,6 +66,13 @@ class LayoutManager(QObject):
         camOpts = self.view.getCamGlobals()
         camOpts['size'] = WindowGeometry.frameSize
         self.setGlobalCamOptions(camOpts)
+
+    def setCamLayoutFields(self, cam):
+        l = self.layout.cameras.get(cam.id)
+        if l:
+            cam.order = l.get('order')
+            cam.position = l.get('position')
+        return cam
 
     def setMaxCams(self, max):
         self.layout.maxAllowed = max

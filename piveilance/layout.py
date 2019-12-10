@@ -12,7 +12,6 @@ class Layout:
                  rows=3,
                  maxAllowed=0,
                  cameras=None):
-
         self.id = parse_type(id, str)
         self.styleName = parse_type(styleName, str)
         self.cols = parse_type(cols, int)
@@ -20,9 +19,11 @@ class Layout:
         self.maxAllowed = max(parse_type(maxAllowed, int), 0)
         self.cameras = parse_type(cameras, list)
         self.style = parseLayout(self.styleName)
+        self.cameras = {v['id']: v for v in self.cameras}
 
     def calculate(self, *args):
         return self.style.calculate(*args)
+
 
 def parseLayout(style):
     return FixedLayoutStyle if style == 'fixed' else FlowLayoutStyle
@@ -226,7 +227,7 @@ class View():
 
     def getCamGlobals(self):
         return {
-           'stretch': self.stretch,
-           'font_ratio': self.font_ratio,
-           'show_labels': self.labels
+            'stretch': self.stretch,
+            'font_ratio': self.font_ratio,
+            'show_labels': self.labels
         }

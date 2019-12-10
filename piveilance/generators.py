@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 
 import requests
@@ -17,7 +16,6 @@ class Generator(QThread):
         self.id = parse_type(id, str)
         self.cameraRepo = parse_type(cameraRepo, dict)
         self.updateInterval = parse_type(updateInterval, float)
-        self.logger = logging.getLogger()
 
     def update(self):
         pass
@@ -28,6 +26,7 @@ class Generator(QThread):
             time.sleep(self.updateInterval)
 
     def createCamera(self, camId):
+        # Fills in defaults for none fields
         try:
             defaultOptions = self.cameraRepo['default']
         except KeyError:
@@ -41,7 +40,6 @@ class Generator(QThread):
         else:
             cameraConfig = defaultOptions
             cameraConfig['id'] = camId
-
         cam = self.camType(**cameraConfig)
         self.updateCameras.connect(cam.setImage)
         return cam

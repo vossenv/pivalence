@@ -93,7 +93,7 @@ class PiWndow(QMainWindow):
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
         labelAct = cmenu.addAction("Toggle labels")
-        
+
         # layoutMenu = cmenu.addMenu("Layout")
         # flowAct = layoutMenu.addAction("Flow")
         # fixedAct = layoutMenu.addAction("Fixed")
