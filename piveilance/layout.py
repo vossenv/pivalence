@@ -22,6 +22,7 @@ class Layout:
         self.cameras = {v['id']: v for v in self.cameras}
 
     def updateLayoutGeometry(self, geometry):
+
         return self.style.calculate(geometry)
 
 
@@ -72,49 +73,49 @@ class FlowLayoutStyle():
 class FixedLayoutStyle():
 
     @classmethod
-    def calculate(cls, width, rows, cols, **kwargs):
+    def calculate(cls, geometry):
 
         """
         # Rows and cols are predefined from the config
 
         """
-        kwargs['frameSize'] = width / cols
-        return kwargs
+        geometry.frameSize = geometry.width / geometry.cols
+        return geometry
+
+    # @classmethod
+    # def filterCameraPositions(cls, camList):
+    #     positions = cls.config.get_dict('positions', {})
+    #     return {k: v for k, v in positions.items() if k in camList}
+
+    # @classmethod
+    # def buildLayout2(cls, camList, geometry, getPlaceholder):
+    #
+    #     #  pos = cls.convertCoordinates(cls.filterCameraPositions(camList))
+    #
+    #     pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
+    #     rev = {v: k for k, v in pos.items()}
+    #     free = [c for c in geometry.grid if c not in pos.values()]
+    #     free.extend([k for k in rev if rev[k] not in camList.keys()])
+    #
+    #     for n, c in camList.items():
+    #         p = pos.get(c.name)
+    #         if p in geometry.grid:
+    #             c.position = p
+    #         elif free:
+    #             p = free.pop(0)
+    #             c.position = p if p in geometry.grid else None
+    #
+    #     geometry.free = free
+    #
+    #     for p in geometry.free:
+    #         d = getPlaceholder(str(p))
+    #         d.position = p
+    #         camList[d.name] = d
+    #
+    #     return camList
 
     @classmethod
-    def filterCameraPositions(cls, camList):
-        positions = cls.config.get_dict('positions', {})
-        return {k: v for k, v in positions.items() if k in camList}
-
-    @classmethod
-    def buildLayout2(cls, camList, getPlaceholder):
-
-        #  pos = cls.convertCoordinates(cls.filterCameraPositions(camList))
-
-        pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
-        rev = {v: k for k, v in pos.items()}
-        free = [c for c in WindowGeometry.grid if c not in pos.values()]
-        free.extend([k for k in rev if rev[k] not in camList.keys()])
-
-        for n, c in camList.items():
-            p = pos.get(c.name)
-            if p in WindowGeometry.grid:
-                c.position = p
-            elif free:
-                p = free.pop(0)
-                c.position = p if p in WindowGeometry.grid else None
-
-        WindowGeometry.free = free
-
-        for p in WindowGeometry.free:
-            d = getPlaceholder(str(p))
-            d.position = p
-            camList[d.name] = d
-
-        return camList
-
-    @classmethod
-    def buildLayout(cls, camList, getPlaceholder):
+    def buildLayout(cls, camList, geometry, getPlaceholder):
 
         if not camList:
             return {}
@@ -127,7 +128,7 @@ class FixedLayoutStyle():
 
         x = {parse_collection(v): k for k, v in fixedCoords.items()}
 
-        for c in WindowGeometry.grid:
+        for c in geometry.grid:
             print()
 
         # remainingCoords = set(WindowGeometry.grid.copy())
@@ -159,31 +160,31 @@ class FixedLayoutStyle():
 
         return newList
 
-    @classmethod
-    def parseTuple(cls, strTuple):
-        return
-
-    @classmethod
-    def convertCoordinates(cls, pos):
-
-        """
-        # Convert literal string coordinates to tuple
-
-        """
-        pos = pos.copy()
-        cc = lambda c: (c[0] - 1, c[1] - 1)
-        pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
-        pos.update({k: cc(v) for k, v in pos.items()})
-        return pos
+    # @classmethod
+    # def parseTuple(cls, strTuple):
+    #     return
+    #
+    # @classmethod
+    # def convertCoordinates(cls, pos):
+    #
+    #     """
+    #     # Convert literal string coordinates to tuple
+    #
+    #     """
+    #     pos = pos.copy()
+    #     cc = lambda c: (c[0] - 1, c[1] - 1)
+    #     pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
+    #     pos.update({k: cc(v) for k, v in pos.items()})
+    #     return pos
 
 
 class WindowGeometry():
 
-    def __init__(self):
+    def __init__(self, rows=0, cols=0, numcams=0):
 
-        self.rows = 0
-        self.cols = 0
-        self.numCams = 0
+        self.rows = rows
+        self.cols = cols
+        self.numCams = numcams
         self.height = 0
         self.width = 0
         self.frameSize = 0

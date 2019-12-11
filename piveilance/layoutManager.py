@@ -20,7 +20,6 @@ class LayoutManager(QObject):
         self.start = time.time()
         self.widget = widget
         self.grid = grid
-        self.geometry = WindowGeometry()
 
         self.globalConfig = config
         layout_id = config['configuration']['layout']
@@ -30,6 +29,9 @@ class LayoutManager(QObject):
         self.setLayout(layout_id)
         self.setGenerator(generator_id)
         self.setView(view_id)
+
+        self.geometry = WindowGeometry(
+            self.layout.rows, self.layout.cols, self.layout.maxAllowed)
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
