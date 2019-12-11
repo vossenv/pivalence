@@ -20,6 +20,7 @@ class LayoutManager(QObject):
         self.start = time.time()
         self.widget = widget
         self.grid = grid
+        self.geometry = WindowGeometry()
 
         self.globalConfig = config
         layout_id = config['configuration']['layout']
@@ -50,12 +51,12 @@ class LayoutManager(QObject):
         if not self.camIds:
             return
 
-        preCols = WindowGeometry.cols
+        preCols = self.geometry.cols
         self.updateWindowGeometry()
 
-        if triggerRedraw or WindowGeometry.cols != preCols:
+        if triggerRedraw or self.geometry.cols != preCols:
             c = {n: self.setCamLayoutFields(self.generator.createCamera(n)) for n in self.camIds}
-            self.camObj = self.layout.style.buildLayout(c, self.getPlaceholder)
+            self.camObj = self.layout.style.buildLayout(c, self.geometry, self.getPlaceholder)
             self.clearLayout()
 
             for n, c in self.camObj.items():
@@ -64,7 +65,7 @@ class LayoutManager(QObject):
                 self.setCamOptions.connect(c.setOptions)
 
         camOpts = self.view.getCamGlobals()
-        camOpts['size'] = WindowGeometry.frameSize
+        camOpts['size'] = self.geometry.frameSize
         self.setGlobalCamOptions(camOpts)
 
     def setCamLayoutFields(self, cam):
@@ -122,13 +123,12 @@ class LayoutManager(QObject):
 
     def updateWindowGeometry(self):
         maxCams = self.layout.maxAllowed
-        n = maxCams if maxCams else len(self.camIds)
-        w = self.widget.frameGeometry().width()
-        h = self.widget.frameGeometry().height()
-        WindowGeometry.update(width=w, height=h, numCams=n)
-        WindowGeometry.update(**self.layout.calculate(w, h, n))
-        WindowGeometry.calculateAllProperties()
-        self.setContentMargin(WindowGeometry.margins)
+        self.geometry.numCams = maxCams if maxCams else len(self.camIds)
+        self.geometry.width = self.widget.frameGeometry().width()
+        self.geometry.height = self.widget.frameGeometry().height()
+        self.layout.updateLayoutGeometry(self.geometry)
+        self.geometry.calculateAllProperties()
+        self.setContentMargin(self.geometry.margins)
 
     def getLayout(self, layoutId):
         newLayout = self.globalConfig['layouts'].get(layoutId)

@@ -21,10 +21,11 @@ class Layout:
         self.style = parseLayout(self.styleName)
         self.cameras = {v['id']: v for v in self.cameras}
 
-    def calculate(self, *args):
-        return self.style.calculate(*args)
+    def updateLayoutGeometry(self, geometry):
+        return self.style.calculate(geometry)
 
-    def layoutProperties(self, **kwargs):
+
+# def layoutProperties(self, **kwargs):
 
 
 def parseLayout(style):
@@ -34,7 +35,7 @@ def parseLayout(style):
 class FlowLayoutStyle():
 
     @classmethod
-    def calculate(cls, width, height, camCount):
+    def calculate(cls, geometry):
 
         """
         # Iterative computation to determine actual cols
@@ -42,42 +43,43 @@ class FlowLayoutStyle():
         """
         # Start by initial guess that ncols = ncams
 
-        cols = rows = frameSize = camCount
+        cols = rows = frameSize = numCams = geometry.numCams
         while cols > 0:
-            rows = math.ceil(camCount / cols)
-            frameSize = width / cols
-            if ((height - frameSize * rows) < frameSize
-                    and (rows * cols - camCount) <= 1
+            rows = math.ceil(numCams / cols)
+            frameSize = geometry.width / cols
+            if ((geometry.height - frameSize * rows) < frameSize
+                    and (rows * cols - numCams) <= 1
                     or rows > cols):
                 break
             cols -= 1
         cols = 1 if cols < 1 else cols
-        return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
+
+        geometry.rows = rows
+        geometry.cols = cols
+        geometry.frameSize = frameSize
+        return geometry
 
     @classmethod
-    def buildLayout(cls, camList, *args):
+    def buildLayout(cls, camList, geometry, *args):
 
         cams = sorted(camList.values(), key=lambda x: x.order or len(camList) + 1)
-        cams = cams[0: WindowGeometry.numCams]
+        cams = cams[0: geometry.numCams]
         for i, c in enumerate(cams):
-            c.position = WindowGeometry.grid[i]
+            c.position = geometry.grid[i]
         return {c.id: c for c in cams}
 
 
 class FixedLayoutStyle():
-    config = None
 
     @classmethod
-    def calculate(cls, width, height, *args):
+    def calculate(cls, width, rows, cols, **kwargs):
 
         """
         # Rows and cols are predefined from the config
 
         """
-        cols = cls.config.get_int('cols', 3)
-        rows = cls.config.get_int('rows', 3)
-        frameSize = width / cols
-        return {'rows': rows, 'cols': cols, 'frameSize': frameSize}
+        kwargs['frameSize'] = width / cols
+        return kwargs
 
     @classmethod
     def filterCameraPositions(cls, camList):
@@ -176,43 +178,43 @@ class FixedLayoutStyle():
 
 
 class WindowGeometry():
-    rows = None
-    cols = None
-    numCams = None
-    height = None
-    width = None
-    frameSize = None
-    margins = None
-    grid = None
-    free = None
 
-    @classmethod
-    def total(cls):
-        return cls.cols * cls.rows
+    def __init__(self):
 
-    @classmethod
-    def correctFrameSize(cls):
-        remainder_height = cls.height - cls.frameSize * cls.rows
+        self.rows = 0
+        self.cols = 0
+        self.numCams = 0
+        self.height = 0
+        self.width = 0
+        self.frameSize = 0
+        self.margins = (0,0,0,0)
+        self.grid = []
+        self.free = []
+
+    def total(self):
+        return self.cols * self.rows
+
+    def correctFrameSize(self):
+        remainder_height = self.height - self.frameSize * self.rows
         if remainder_height < 0:
-            cls.frameSize = cls.frameSize - abs(remainder_height / cls.rows)
+            self.frameSize = self.frameSize - abs(remainder_height / self.rows)
 
-    @classmethod
-    def setMargins(cls):
-        rheight = max(cls.height - cls.frameSize * cls.rows, 0) / 2
-        vheight = max(cls.width - cls.frameSize * cls.cols, 0) / 2
-        cls.margins = (vheight, rheight, vheight, rheight)
 
-    @classmethod
-    def calculateAllProperties(cls):
-        cls.grid = [(i, j) for i in range(cls.rows) for j in range(cls.cols)]
-        cls.correctFrameSize()
-        cls.setMargins()
+    def setMargins(self):
+        rheight = max(self.height - self.frameSize * self.rows, 0) / 2
+        vheight = max(self.width - self.frameSize * self.cols, 0) / 2
+        self.margins = (vheight, rheight, vheight, rheight)
 
-    @classmethod
-    def update(cls, **values):
+
+    def calculateAllProperties(self):
+        self.grid = [(i, j) for i in range(self.rows) for j in range(self.cols)]
+        self.correctFrameSize()
+        self.setMargins()
+
+    def update(self, **values):
         for k, v in values.items():
             if v is not None:
-                setattr(cls, k, v)
+                setattr(self, k, v)
 
 
 class View():

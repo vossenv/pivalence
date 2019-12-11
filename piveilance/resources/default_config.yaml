@@ -1,6 +1,6 @@
 
 configuration:
-  layout: default
+  layout: simple
   generator: default
   view: default
 
@@ -43,7 +43,7 @@ layouts:
 
   - id: simple
     style_name: flow
-    max_allowed: 3
+    max_allowed: 0
     cameras:
       - id: living_room
         order: 1
