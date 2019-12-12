@@ -100,7 +100,7 @@ class PiWndow(QMainWindow):
 
         maxMenu = cmenu.addMenu("Max Cams")
         entries = []
-        if self.layoutManager.layout.style == layout.FlowLayoutStyle:
+        if self.layoutManager.layout.style.adjustNumberAllowed:
             entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
         entries.append("Unlimited")
         for e in entries:

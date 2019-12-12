@@ -1,6 +1,16 @@
 import math
 
+from piveilance.cameras import PlaceholderCamera
 from piveilance.util import parse_collection, parse_type
+
+
+class LayoutStyle():
+
+    def calculate(self, geometry):
+        pass
+
+    def buildLayout(self, camList, geometry, *args):
+        pass
 
 
 class Layout:
@@ -18,25 +28,20 @@ class Layout:
         self.rows = parse_type(rows, int)
         self.maxAllowed = max(parse_type(maxAllowed, int), 0)
         self.cameras = parse_type(cameras, list)
-        self.style = parseLayout(self.styleName)
         self.cameras = {v['id']: v for v in self.cameras}
+        self.setLayout(self.styleName)
 
     def updateLayoutGeometry(self, geometry):
-
         return self.style.calculate(geometry)
 
-
-# def layoutProperties(self, **kwargs):
-
-
-def parseLayout(style):
-    return FixedLayoutStyle if style == 'fixed' else FlowLayoutStyle
+    def setLayout(self, style):
+        self.style = FixedLayoutStyle() if style == 'fixed' else FlowLayoutStyle()
 
 
-class FlowLayoutStyle():
+class FlowLayoutStyle(LayoutStyle):
+    adjustNumberAllowed = True
 
-    @classmethod
-    def calculate(cls, geometry):
+    def calculate(self, geometry):
 
         """
         # Iterative computation to determine actual cols
@@ -60,20 +65,20 @@ class FlowLayoutStyle():
         geometry.frameSize = frameSize
         return geometry
 
-    @classmethod
-    def buildLayout(cls, camList, geometry, *args):
+    def buildLayout(self, camList, geometry, *args):
 
         cams = sorted(camList.values(), key=lambda x: x.order or len(camList) + 1)
         cams = cams[0: geometry.numCams]
+        # cams = [PlaceholderCamera(id=c.id,name=c.name) for c in cams]
         for i, c in enumerate(cams):
             c.position = geometry.grid[i]
         return {c.id: c for c in cams}
 
 
-class FixedLayoutStyle():
+class FixedLayoutStyle(LayoutStyle):
+    adjustNumberAllowed = False
 
-    @classmethod
-    def calculate(cls, geometry):
+    def calculate(self, geometry):
 
         """
         # Rows and cols are predefined from the config
@@ -83,16 +88,16 @@ class FixedLayoutStyle():
         return geometry
 
     # @classmethod
-    # def filterCameraPositions(cls, camList):
-    #     positions = cls.config.get_dict('positions', {})
+    # def filterCameraPositions(self, camList):
+    #     positions = self.config.get_dict('positions', {})
     #     return {k: v for k, v in positions.items() if k in camList}
 
     # @classmethod
-    # def buildLayout2(cls, camList, geometry, getPlaceholder):
+    # def buildLayout2(self, camList, geometry, getPlaceholder):
     #
-    #     #  pos = cls.convertCoordinates(cls.filterCameraPositions(camList))
+    #     #  pos = self.convertCoordinates(self.filterCameraPositions(camList))
     #
-    #     pos = cls.convertCoordinates(cls.config.get_dict('positions', {}))
+    #     pos = self.convertCoordinates(self.config.get_dict('positions', {}))
     #     rev = {v: k for k, v in pos.items()}
     #     free = [c for c in geometry.grid if c not in pos.values()]
     #     free.extend([k for k in rev if rev[k] not in camList.keys()])
@@ -114,8 +119,7 @@ class FixedLayoutStyle():
     #
     #     return camList
 
-    @classmethod
-    def buildLayout(cls, camList, geometry, getPlaceholder):
+    def buildLayout(self, camList, geometry, getPlaceholder):
 
         if not camList:
             return {}
@@ -124,7 +128,7 @@ class FixedLayoutStyle():
 
         z = getPlaceholder('no')
 
-        fixedCoords = cls.config.get_dict('positions', {})
+        fixedCoords = self.config.get_dict('positions', {})
 
         x = {parse_collection(v): k for k, v in fixedCoords.items()}
 
@@ -133,7 +137,7 @@ class FixedLayoutStyle():
 
         # remainingCoords = set(WindowGeometry.grid.copy())
         #
-        # fixedCoords = cls.convertCoordinates(cls.config.get_dict('positions', {}))
+        # fixedCoords = self.convertCoordinates(self.config.get_dict('positions', {}))
         # for name, pos in fixedCoords.items():
         #     if pos not in WindowGeometry.grid:
         #         print("Warning: specified position {0} for {1} lies outside the grid".format(pos, name))
@@ -161,11 +165,11 @@ class FixedLayoutStyle():
         return newList
 
     # @classmethod
-    # def parseTuple(cls, strTuple):
+    # def parseTuple(self, strTuple):
     #     return
     #
     # @classmethod
-    # def convertCoordinates(cls, pos):
+    # def convertCoordinates(self, pos):
     #
     #     """
     #     # Convert literal string coordinates to tuple
@@ -188,7 +192,7 @@ class WindowGeometry():
         self.height = 0
         self.width = 0
         self.frameSize = 0
-        self.margins = (0,0,0,0)
+        self.margins = (0, 0, 0, 0)
         self.grid = []
         self.free = []
 
@@ -200,12 +204,10 @@ class WindowGeometry():
         if remainder_height < 0:
             self.frameSize = self.frameSize - abs(remainder_height / self.rows)
 
-
     def setMargins(self):
         rheight = max(self.height - self.frameSize * self.rows, 0) / 2
         vheight = max(self.width - self.frameSize * self.cols, 0) / 2
         self.margins = (vheight, rheight, vheight, rheight)
-
 
     def calculateAllProperties(self):
         self.grid = [(i, j) for i in range(self.rows) for j in range(self.cols)]

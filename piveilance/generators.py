@@ -44,6 +44,8 @@ class Generator(QThread):
         self.updateCameras.connect(cam.setImage)
         return cam
 
+    def defaultCamera(self):
+        pass
 
 class PiCamGenerator(Generator):
 

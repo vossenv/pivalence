@@ -10,18 +10,6 @@ from PyQt5.QtWidgets import QLabel, QSizePolicy
 from piveilance.config import Config
 from piveilance.util import ImageManip
 
-
-def parseCameraType(cameraType):
-    if cameraType == 'PiCam':
-        return PiCamera
-    elif cameraType == 'Placeholder':
-        return PlaceholderCamera
-    elif cameraType == "DummyCam":
-        return DummyCamera
-    else:
-        raise ValueError("No such camera type: " + cameraType)
-
-
 class Camera(QLabel):
     def __init__(self, **kwargs):
         super(Camera, self).__init__(None)
@@ -73,9 +61,6 @@ class Camera(QLabel):
     def setImage(self, camData=None):
         pass
 
-    def defaultCamera(self):
-        pass
-
 
 class PiCamera(Camera):
     def __init__(self, **kwargs):
@@ -100,23 +85,23 @@ class PiCamera(Camera):
         return base64.decodebytes(byte)
 
 
-class DummyCamera(Camera):
-    def __init__(self, id="default", options=None, parent=None):
-        super(DummyCamera, self).__init__(id, options, parent)
-
-    @pyqtSlot(object, name="setimage")
-    def setImage(self, camData=None):
-
-        if not self.pixmap:
-            img = QImage()
-            img.load("resources/ent.jpg")
-            if self.crop_ratio != 0:
-                crop = max((img.width() - img.height()) * self.crop_ratio, 0)
-                img = ImageManip.crop_direction(img, crop, self.direction)
-
-            time.sleep(0.005 * random.randint(0, 1))
-            self.pixmap = QPixmap().fromImage(img)
-            self.setFrameSize()
+# class DummyCamera(Camera):
+#     def __init__(self, id="default", options=None, parent=None):
+#         super(DummyCamera, self).__init__(id, options, parent)
+#
+#     @pyqtSlot(object, name="setimage")
+#     def setImage(self, camData=None):
+#
+#         if not self.pixmap:
+#             img = QImage()
+#             img.load("resources/ent.jpg")
+#             if self.crop_ratio != 0:
+#                 crop = max((img.width() - img.height()) * self.crop_ratio, 0)
+#                 img = ImageManip.crop_direction(img, crop, self.direction)
+#
+#             time.sleep(0.005 * random.randint(0, 1))
+#             self.pixmap = QPixmap().fromImage(img)
+#             self.setFrameSize()
 
 
 class PlaceholderCamera(Camera):
