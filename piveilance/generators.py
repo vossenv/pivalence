@@ -4,7 +4,7 @@ import time
 import requests
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from piveilance.cameras import PiCamera
+from piveilance.model import PiCamera
 from piveilance.util import parse_type
 
 

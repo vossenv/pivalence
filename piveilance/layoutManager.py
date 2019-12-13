@@ -3,9 +3,8 @@ import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
-from piveilance.layout import WindowGeometry
 from piveilance.repository import Repository
-from piveilance.util import *
+from piveilance.util import compareIter
 
 
 class LayoutManager(QObject):
@@ -22,8 +21,6 @@ class LayoutManager(QObject):
         self.setLayout(config['configuration']['layout'])
         self.setGenerator(config['configuration']['generator'])
         self.setView(config['configuration']['view'])
-        self.geometry = WindowGeometry(
-            self.layout.rows, self.layout.cols, self.layout.maxAllowed)
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
@@ -45,12 +42,12 @@ class LayoutManager(QObject):
         if not self.camIds:
             return
 
-        preCols = self.geometry.cols
-        self.updateWindowGeometry()
+        preCols = self.layout.geometry.cols
+        self.updateGeometry()
 
-        if triggerRedraw or self.geometry.cols != preCols:
+        if triggerRedraw or self.layout.geometry.cols != preCols:
             c = {n: self.setCamLayoutFields(self.generator.createCamera(n)) for n in self.camIds}
-            self.camObj = self.layout.style.buildLayout(c, self.geometry)
+            self.camObj = self.layout.build(c)
             self.clearLayout()
 
             for n, c in self.camObj.items():
@@ -59,7 +56,7 @@ class LayoutManager(QObject):
                 self.setCamOptions.connect(c.setOptions)
 
         camOpts = self.view.getCamGlobals()
-        camOpts['size'] = self.geometry.frameSize
+        camOpts['size'] = self.layout.geometry.frameSize
         self.setGlobalCamOptions(camOpts)
 
     def setCamLayoutFields(self, cam):
@@ -89,9 +86,6 @@ class LayoutManager(QObject):
     def setLayout(self, layoutId):
         self.layout = self.repository.getLayout(layoutId)
 
-    # def setLayoutSyle(self, layoutStyle):
-    #     self.layout.style = layoutStyle
-
     def setStretchMode(self, toggle):
         self.view.stretch = toggle
         self.arrange()
@@ -112,11 +106,10 @@ class LayoutManager(QObject):
         m = margins if not self.view.stretch else (0, 0, 0, 0)
         self.grid.setContentsMargins(*m)
 
-    def updateWindowGeometry(self):
-        maxCams = self.layout.maxAllowed
-        self.geometry.numCams = maxCams if maxCams else len(self.camIds)
-        self.geometry.width = self.widget.frameGeometry().width()
-        self.geometry.height = self.widget.frameGeometry().height()
-        self.layout.updateLayoutGeometry(self.geometry)
-        self.geometry.calculateAllProperties()
-        self.setContentMargin(self.geometry.margins)
+    def updateGeometry(self):
+        self.layout.updateGeometry(
+            self.widget.frameGeometry().width(),
+            self.widget.frameGeometry().height(),
+            len(self.camIds)
+        )
+        self.setContentMargin(self.layout.geometry.margins)

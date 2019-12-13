@@ -7,7 +7,6 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
 
-from piveilance import layout
 from piveilance._version import __version__
 from piveilance.config import *
 from piveilance.layoutManager import LayoutManager
@@ -71,7 +70,6 @@ class PiWndow(QMainWindow):
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
 
-
     def resizeEvent(self, event):
         """
         Overridden method - resize the gride on window resize
@@ -100,7 +98,7 @@ class PiWndow(QMainWindow):
 
         maxMenu = cmenu.addMenu("Max Cams")
         entries = []
-        if self.layoutManager.layout.style.adjustNumberAllowed:
+        if self.layoutManager.layout.adjustNumberAllowed:
             entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
         entries.append("Unlimited")
         for e in entries:
@@ -118,8 +116,8 @@ class PiWndow(QMainWindow):
             else:
                 self.showFullScreen()
         #
-        # elif action == flowAct and self.layoutManager.layout != layout.FlowLayoutStyle:
-        #     self.layoutManager.setLayout(layout.FlowLayoutStyle)
+        # elif action == flowAct and self.layoutManager.layout != layout.FlowLayout:
+        #     self.layoutManager.setLayout(layout.FlowLayout)
         #     self.layoutManager.arrange(triggerRedraw=True)
         # elif action == fixedAct and self.layoutManager.layout != layout.FixedLayoutStyle:
         #     self.layoutManager.setLayout(layout.FixedLayoutStyle)
