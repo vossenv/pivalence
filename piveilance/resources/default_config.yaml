@@ -1,6 +1,6 @@
 
 configuration:
-  layout: test_fixed
+  layout: fixed
   generator: default
   view: default
   placeholder: offline.gif
@@ -38,8 +38,9 @@ layouts:
 
   - id: fixed
     type: FixedLayout
-    cols: 4
+    cols: 5
     rows: 2
+    allowExpand: true
     cameras:
       - id: front_top
         position: (0,0)
