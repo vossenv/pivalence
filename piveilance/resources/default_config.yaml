@@ -10,6 +10,7 @@ views:
     stretch: false
     fontRatio: 0.045
     labels: true
+    showCoords: true
 
 cameras:
   - id: default
@@ -31,6 +32,9 @@ cameras:
 
 layouts:
   - id: default
+    type: FlowLayout
+    maxAllowed: 0
+  - id: fixed
     type: FixedLayout
     cols: 4
     rows: 4
@@ -57,7 +61,3 @@ generators:
     dataUrl: http://192.168.50.139:9001/cameras/next
     updateInterval: .1
     listRefresh: 10
-
-
-
-  #b'["garage_side","back_bottom","catpod","front_bottom","2049","2048","front_top","back_top"]'

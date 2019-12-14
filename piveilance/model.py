@@ -139,18 +139,21 @@ class View():
                  fullscreen,
                  stretch,
                  fontRatio,
-                 labels):
+                 labels,
+                 showCoords):
         self.id = parse_type(id, str)
         self.fullscreen = parse_type(fullscreen, bool)
         self.stretch = parse_type(stretch, bool)
-        self.font_ratio = parse_type(fontRatio, float)
+        self.fontRatio = parse_type(fontRatio, float)
         self.labels = parse_type(labels, bool)
+        self.showCoords = parse_type(showCoords, bool)
 
     def getCamGlobals(self):
         return {
             'stretch': self.stretch,
-            'font_ratio': self.font_ratio,
-            'show_labels': self.labels
+            'fontRatio': self.fontRatio,
+            'showLabels': self.labels,
+            'showCoords': self.showCoords,
         }
 
 
@@ -175,8 +178,9 @@ class Camera(QLabel):
         self.position = options.get('position', None)
         self.order = options.get('order', None)
         self.size = options.get_int('size', 50)
-        self.show_labels = options.get_bool('show_labels', False)
-        self.font_ratio = options.get_float('font_ratio', 0.025)
+        self.showLabels = options.get_bool('showLabels', False)
+        self.showCoords = options.get_bool('showCoords', True)
+        self.fontRatio = options.get_float('fontRatio', 0.025)
         self.direction = options.get_string('direction', 'right')
         self.stretch = options.get_bool('stretch', False)
         self.setOptions({})
@@ -195,11 +199,11 @@ class Camera(QLabel):
 
     def setLabel(self):
         # fit text if too big
-        text = self.name if self.show_labels else ""
-        if self.position:
+        text = self.name if self.showLabels else ""
+        if self.position and self.showCoords:
             text = str(self.position) + " " + text
         self.label.setText(text)
-        self.label.setFont(QFont("Arial", self.font_ratio * self.size))
+        self.label.setFont(QFont("Arial", self.fontRatio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setStyleSheet("color: #05FF00;"
                                  "font-weight: bold")

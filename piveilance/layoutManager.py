@@ -78,6 +78,7 @@ class LayoutManager(QObject):
 
     def setLayout(self, layoutId):
         self.layout = self.repository.getLayout(layoutId)
+        self.arrange(True)
 
     def setStretchMode(self, toggle):
         self.view.stretch = toggle
@@ -85,6 +86,10 @@ class LayoutManager(QObject):
 
     def setLabelMode(self, toggle):
         self.view.labels = toggle
+        self.arrange()
+
+    def setLabelCoordMode(self, toggle):
+        self.view.showCoords = toggle
         self.arrange()
 
     def setView(self, viewId):

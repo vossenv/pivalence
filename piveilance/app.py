@@ -51,6 +51,7 @@ class PiWndow(QMainWindow):
         self.initWindow(stylesheet, title, icon)
         self.layoutManager = LayoutManager(self.widget, self.grid, self.globalConfig)
         self.resized.connect(self.layoutManager.resizeEventHandler)
+        self.updateStatusBar()
         if self.layoutManager.view.fullscreen:
             self.showFullScreen()
         else:
@@ -65,12 +66,19 @@ class PiWndow(QMainWindow):
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(icon))
         self.setCentralWidget(self.widget)
-        self.statusBar().showMessage('Version: ' + __version__)
         self.grid = QGridLayout()
         self.grid.setSpacing(0)
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
+
+    def updateStatusBar(self, message=""):
+        text = "Version: {0} | Layout: {1} | View: {2}"
+        self.statusBar().showMessage(text.format(
+            __version__,
+            self.layoutManager.layout.id,
+            self.layoutManager.view.id
+        ))
 
     def resizeEvent(self, event):
         """
@@ -92,13 +100,11 @@ class PiWndow(QMainWindow):
         quitAct = cmenu.addAction("Quit")
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
-        labelAct = cmenu.addAction("Toggle labels")
-
-        # layoutMenu = cmenu.addMenu("Layout")
-        # flowAct = layoutMenu.addAction("Flow")
-        # fixedAct = layoutMenu.addAction("Fixed")
-
+        coordAct = cmenu.addAction("Show/Hide coordinates")
+        labelAct = cmenu.addAction("Show/Hide labels")
+        layoutMenu = cmenu.addMenu("Layout")
         maxMenu = cmenu.addMenu("Max Cams")
+
         entries = []
         if self.layoutManager.layout.adjustNumberAllowed:
             entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
@@ -108,8 +114,13 @@ class PiWndow(QMainWindow):
             a.name = "limit"
             a.value = e
 
-        action = cmenu.exec_(self.mapToGlobal(event.pos()))
+        entries = self.layoutManager.repository.getAllLayoutIds()
+        for e in entries:
+            a = layoutMenu.addAction(str(e))
+            a.name = "layout"
+            a.value = e
 
+        action = cmenu.exec_(self.mapToGlobal(event.pos()))
         if action == quitAct:
             qApp.quit()
         elif action == fullScreenAct:
@@ -117,25 +128,23 @@ class PiWndow(QMainWindow):
                 self.showNormal()
             else:
                 self.showFullScreen()
-        #
-        # elif action == flowAct and self.layoutManager.layout != layout.FlowLayout:
-        #     self.layoutManager.setLayout(layout.FlowLayout)
-        #     self.layoutManager.arrange(triggerRedraw=True)
-        # elif action == fixedAct and self.layoutManager.layout != layout.FixedLayoutStyle:
-        #     self.layoutManager.setLayout(layout.FixedLayoutStyle)
-        #     self.layoutManager.arrange(triggerRedraw=True)
-        #
         elif action == stretchAct:
             current = self.layoutManager.view.stretch
             self.layoutManager.setStretchMode(not current)
         elif action == labelAct:
             current = self.layoutManager.view.labels
             self.layoutManager.setLabelMode(not current)
-
+        elif action == coordAct:
+            current = self.layoutManager.view.showCoords
+            self.layoutManager.setLabelCoordMode(not current)
         elif hasattr(action, 'name'):
             if action.name == "limit":
                 v = action.value
                 self.layoutManager.setMaxCams(0 if v == "Unlimited" else v)
+            elif action.name == "layout":
+                self.layoutManager.setLayout(action.value)
+                self.updateStatusBar()
+
 
 
 if __name__ == '__main__':

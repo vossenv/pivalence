@@ -37,3 +37,6 @@ class Repository():
             raise ValueError("Invalid generator type specified: '{}'.  "
                              "Allowed are [PiCamGenerator]".format(generatorConfig['type']))
         return generatorType(**generatorConfig)
+
+    def getAllLayoutIds(self):
+        return list(self.objectData['layouts'].keys())

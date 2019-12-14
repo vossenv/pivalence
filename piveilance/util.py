@@ -76,6 +76,8 @@ def parse_type(value, as_type):
         raise TypeError("Error parsing '{0}' as type '{1}'".format(value, as_type))
 
 def parse_tuple(value):
+    if isinstance(value, tuple):
+        return value
     if value is None:
         return
     value = "(" + value.replace("(","").replace(")","") + ")"
