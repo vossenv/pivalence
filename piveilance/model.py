@@ -8,7 +8,6 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QPixmap, QImage, QMovie
 from PyQt5.QtWidgets import QLabel, QSizePolicy
 
-
 from piveilance.config import Config
 from piveilance.util import ImageManip
 from piveilance.util import parse_type
@@ -43,6 +42,12 @@ class Layout:
         self.geometry.height = height
         self.calculate()
 
+    def setCamLayoutFields(self, camList):
+        for c in camList.values():
+            if c.id in self.cameras:
+                c.order = self.cameras[c.id].get('order')
+                c.position = self.cameras[c.id].get('position')
+
 
 class FlowLayout(Layout):
 
@@ -76,6 +81,7 @@ class FlowLayout(Layout):
 
     def build(self, camList, *args):
 
+        self.setCamLayoutFields(camList)
         cams = sorted(camList.values(), key=lambda x: x.order or len(camList) + 1)
         cams = cams[0: self.maxAllowed]
         # cams = [PlaceholderCamera(id=c.id,name=c.name) for c in cams]

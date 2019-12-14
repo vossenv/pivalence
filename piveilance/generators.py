@@ -47,6 +47,7 @@ class Generator(QThread):
     def defaultCamera(self):
         pass
 
+
 class PiCamGenerator(Generator):
 
     def __init__(self, **kwargs):
