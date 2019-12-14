@@ -3,7 +3,7 @@ import sys
 from os.path import exists
 
 import click
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
@@ -53,6 +53,7 @@ class PiWndow(QMainWindow):
         self.updateStatusBar()
         if self.layoutManager.view.fullscreen:
             self.showFullScreen()
+            self.setCursor(Qt.BlankCursor)
         else:
             self.showNormal()
 
@@ -125,8 +126,10 @@ class PiWndow(QMainWindow):
         elif action == fullScreenAct:
             if self.isFullScreen():
                 self.showNormal()
+                self.setCursor(Qt.ArrowCursor)
             else:
                 self.showFullScreen()
+                self.setCursor(Qt.BlankCursor)
         elif action == stretchAct:
             current = self.layoutManager.view.stretch
             self.layoutManager.setStretchMode(not current)
