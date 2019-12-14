@@ -5,25 +5,18 @@
     background-color: rgb(0, 0, 0);
 }
 
-.QPixmap {
-    width: 10%;
-}
-
-
-.PlaceholderCamera, .DummyCamera, .PiCamera {
+.PlaceholderCamera, .PiCamera {
     border: 1px solid white;
     border-radius: 0px;
     font-weight: bold;
     font-size: 18px;
     font-family: Courier;
     color: #05ff00;
-    /*background-color: #6e6e6e;*/
     qproperty-alignment: AlignCenter;
 }
 
 
 .QStatusBar {
-    padding-left: 8px;
     background: black;
     color: #34eb52;
     font-weight: normal;

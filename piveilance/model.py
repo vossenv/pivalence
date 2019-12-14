@@ -170,8 +170,8 @@ class Camera(QLabel):
         self.id = options['id']
         self.movie = None
 
-        self.crop_ratio = options.get_float('crop_ratio', 0)
-        if self.crop_ratio < 0 or self.crop_ratio > 1:
+        self.cropRatio = options.get_float('cropRatio', 0)
+        if self.cropRatio < 0 or self.cropRatio > 1:
             raise ValueError("Crop cannot be negative or inverse (>1)")
 
         self.name = options.get('name', self.id)
@@ -205,8 +205,7 @@ class Camera(QLabel):
         self.label.setText(text)
         self.label.setFont(QFont("Arial", self.fontRatio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.label.setStyleSheet("color: #05FF00;"
-                                 "font-weight: bold")
+        self.label.setStyleSheet("color: #05FF00; font-weight: bold")
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
@@ -223,8 +222,8 @@ class PiCamera(Camera):
             data = self.getImage(camData[self.id]['image'])
             img = QImage()
             img.loadFromData(data)
-            if self.crop_ratio != 0:
-                crop = max((img.width() - img.height()) * self.crop_ratio, 0)
+            if self.cropRatio != 0:
+                crop = max((img.width() - img.height()) * self.cropRatio, 0)
                 img = ImageManip.crop_direction(img, crop, self.direction)
 
             time.sleep(0.005 * random.randint(0, 1))
@@ -264,7 +263,6 @@ class WindowGeometry():
         self.frameSize = 0
         self.margins = (0, 0, 0, 0)
         self.grid = []
-        self.free = []
 
     def total(self):
         return self.cols * self.rows

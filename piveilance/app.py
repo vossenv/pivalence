@@ -42,9 +42,9 @@ class PiWndow(QMainWindow):
         stylesheet = get_resource("styles.qss")
         icon = get_image("icon.ico")
 
-        configFile = cli_options.get('config') or "default_config.yaml"
+        configFile = cli_options.get('config') or "config.yaml"
         if not exists(configFile):
-            shutil.copy(get_resource(configFile), ".")
+            shutil.copy(get_resource("default_config.yaml"), "config.yaml")
 
         self.globalConfig = ConfigLoader(configFile).loadGlobalConfig()
         self.initWindow(stylesheet, title, icon)

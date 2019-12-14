@@ -1,17 +1,26 @@
+import os
+
 from setuptools import setup, find_packages
 from piveilance._version import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+def package_files(*dirs):
+    paths = []
+    for d in dirs:
+        for (path, directories, filenames) in os.walk(d):
+            for filename in filenames:
+                paths.append(os.path.join('..', path, filename))
+    return paths
+
+extra_files = package_files('piveilance/resources')
 setup_deps = [
           'pyinstaller',
           'wheel',
           'twine'
       ],
-
 test_deps = ['pytest']
-
 setup(name='piveilance',
       version=__version__,
       description='PiCam Surveilance App',
@@ -24,7 +33,7 @@ setup(name='piveilance',
       license='MIT',
       packages=find_packages(),
       package_data={
-          'piveilance': ['resources/*'],
+          'piveilance': extra_files,
       },
       install_requires=[
           'click',

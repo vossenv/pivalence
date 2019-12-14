@@ -35,4 +35,4 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=False,
-          icon='../piveilance/resources/icon.ico' )
+          icon='../piveilance/resources/image/icon.ico' )

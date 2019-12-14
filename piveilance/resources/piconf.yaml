@@ -7,7 +7,7 @@ configuration:
 
 views:
   - id: default
-    fullscreen: false
+    fullscreen: true
     stretch: false
     fontRatio: 0.045
     labels: true
@@ -38,15 +38,28 @@ layouts:
 
   - id: fixed
     type: FixedLayout
-    cols: 4
-    rows: 4
+    cols: 5
+    rows: 2
     cameras:
-      - id: living_room
+      - id: front_top
         position: (0,0)
-      - id: garage
-        position: (0,2)
-      - id: fake
+      - id: front_bottom
+        position: (1,0)
+      - id: catpod
+        position: (1,1)
+      - id: living_room
         position: (0,1)
+      - id: back_bottom
+        position: (0,2)
+      - id: garage_side
+        position: (1,2)
+      - id: bedroom
+        position: (0,3)
+      - id: fisheyepi
+        position: (0,4)
+      - id: garage
+        position: (1,4)
+
 
   - id: simple
     type: FlowLayout
