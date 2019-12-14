@@ -52,6 +52,7 @@ class LayoutManager(QObject):
         if triggerRedraw or self.layout.geometry.cols != preCols:
             c = {n: self.generator.createCamera(n) for n in self.camIds}
             self.camObj = self.layout.build(c)
+            self.setContentMargin(self.layout.geometry.margins)
             self.clearLayout()
 
             for n, c in self.camObj.items():

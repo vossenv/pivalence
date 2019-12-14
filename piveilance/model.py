@@ -21,11 +21,13 @@ class Layout:
                  cols=3,
                  rows=3,
                  maxAllowed=0,
-                 cameras=None):
+                 cameras=None,
+                 allowExpand=False):
         self.id = parse_type(id, str)
         self.type = parse_type(type, str)
         self.cols = parse_type(cols, int)
         self.rows = parse_type(rows, int)
+        self.allowExpand = parse_type(allowExpand, bool)
         self.maxAllowed = max(parse_type(maxAllowed, int), 0)
         self.cameras = {v['id']: v for v in parse_type(cameras, list)}
         self.geometry = WindowGeometry(self.rows, self.cols)
@@ -113,6 +115,19 @@ class FixedLayout(Layout):
         positioned = {}
         freeCams = {c for c in camMap.values() if c.id not in self.cameras}
         camsByPosition = {c.get('position'): c for c in self.cameras.values()}
+
+        for p, c in camsByPosition.items():
+            if p not in self.geometry.grid and c['id'] in camMap:
+                freeCams.add(camMap[c['id']])
+
+        extras = len(camMap) - self.cols*self.rows
+        if extras > 0 and self.allowExpand:
+            newCols = math.ceil(extras/self.rows)
+            self.geometry.cols = self.cols + newCols
+            self.calculate()
+        elif self.geometry.cols > self.cols and extras <= 0:
+            self.geometry.cols = self.cols
+            self.calculate()
 
         for pos in self.geometry.grid:
             if pos in camsByPosition:
