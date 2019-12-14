@@ -1,8 +1,9 @@
 
 configuration:
-  layout: default
+  layout: fixed
   generator: default
   view: default
+  placeholder: data.gif
 
 views:
   - id: default

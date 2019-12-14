@@ -10,9 +10,8 @@ from click_default_group import DefaultGroup
 
 from piveilance._version import __version__
 from piveilance.config import ConfigLoader
-
 from piveilance.layoutManager import LayoutManager
-from piveilance.resources import get_resource
+from piveilance.resources import get_resource, get_image
 
 
 @click.group(cls=DefaultGroup, default='start', default_if_no_args=True)
@@ -41,7 +40,7 @@ class PiWndow(QMainWindow):
 
         title = "Pi Veilance"
         stylesheet = get_resource("styles.qss")
-        icon = get_resource("icon.ico")
+        icon = get_image("icon.ico")
 
         configFile = cli_options.get('config') or "default_config.yaml"
         if not exists(configFile):

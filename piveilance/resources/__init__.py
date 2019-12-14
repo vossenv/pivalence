@@ -14,3 +14,5 @@ def get_resource_dir():
 
 def get_resource(name):
     return join(get_resource_dir(), name)
+def get_image(name):
+    return join(get_resource_dir(), "image",  name)

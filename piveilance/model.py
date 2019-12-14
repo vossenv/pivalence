@@ -236,26 +236,8 @@ class PiCamera(Camera):
         return base64.decodebytes(byte)
 
 
-# class DummyCamera(Camera):
-#     def __init__(self, id="default", options=None, parent=None):
-#         super(DummyCamera, self).__init__(id, options, parent)
-#
-#     @pyqtSlot(object, name="setimage")
-#     def setImage(self, camData=None):
-#
-#         if not self.pixmap:
-#             img = QImage()
-#             img.load("resources/ent.jpg")
-#             if self.crop_ratio != 0:
-#                 crop = max((img.width() - img.height()) * self.crop_ratio, 0)
-#                 img = ImageManip.crop_direction(img, crop, self.direction)
-#
-#             time.sleep(0.005 * random.randint(0, 1))
-#             self.pixmap = QPixmap().fromImage(img)
-#             self.setFrameSize()
-
-
 class PlaceholderCamera(Camera):
+    image = "resources/image/offline.gif"
 
     def __init__(self, **kwargs):
         super(PlaceholderCamera, self).__init__(**kwargs)
@@ -266,7 +248,7 @@ class PlaceholderCamera(Camera):
             self.movie.setScaledSize(QSize(self.size, self.size))
 
     def setImage(self, camData=None):
-        self.movie = QMovie("resources/noise.gif")
+        self.movie = QMovie(self.image)
         self.setMovie(self.movie)
         self.setFrameSize()
         self.movie.start()

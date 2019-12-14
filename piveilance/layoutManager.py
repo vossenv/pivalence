@@ -1,9 +1,12 @@
+import os
 import random
 import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
+from piveilance.model import PlaceholderCamera
 from piveilance.repository import Repository
+from piveilance.resources import get_image
 from piveilance.util import compareIter
 
 
@@ -21,6 +24,7 @@ class LayoutManager(QObject):
         self.setLayout(config['configuration']['layout'])
         self.setGenerator(config['configuration']['generator'])
         self.setView(config['configuration']['view'])
+        self.setPlaceholderImage(config['configuration'].get('placeholder'))
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
@@ -71,6 +75,15 @@ class LayoutManager(QObject):
             self.camObj['id'].setOptions(options)
         except KeyError:
             raise ValueError("Camera " + id + " does not exist")
+
+    def setPlaceholderImage(self, path, external=False):
+        if external:
+            path = os.path.abspath(path)
+        else:
+            path = get_image(path)
+        if not os.path.exists(path):
+            raise FileNotFoundError("Placeholder image path not found: " + str(path))
+        PlaceholderCamera.image = path
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):

@@ -74,13 +74,3 @@ class PiCamGenerator(Generator):
         except Exception as e:
             print(str(e))  # need to handle
 
-# class DummyGenerator(Generator):
-#
-#     def __init__(self, camConfig, parent=None):
-#         super(DummyGenerator, self).__init__(camConfig, DummyCamera, parent)
-#         self.numCams = 7
-#
-#     def update(self):
-#         # r = requests.get("https://picsum.photos/500").content
-#         camData = {"Cam " + str(x): uuid.uuid4() for x in range(0, self.numCams)}
-#         self.updateCameras.emit(camData)
