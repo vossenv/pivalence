@@ -3,35 +3,24 @@ import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
-from piveilance.camera.cameras import PlaceholderCamera
-from piveilance.layout import FixedLayout, FlowLayout, WindowGeometry
-from piveilance.util import *
+from piveilance.repository import Repository
+from piveilance.util import compareIter
 
 
 class LayoutManager(QObject):
     setCamOptions = pyqtSignal(object)
 
-    def __init__(self, widget, grid, camConfig, layoutConfig):
+    def __init__(self, widget, grid, config):
         super(LayoutManager, self).__init__()
 
         self.camIds = []
         self.start = time.time()
         self.widget = widget
         self.grid = grid
-        self.camConfig = camConfig
-        self.layoutConfig = layoutConfig
-        self.refresh = layoutConfig.get_float('list_refresh', 10)
-        self.maxCams = max(layoutConfig.get_int('max_allowed', 0), 0)
-
-        genName = self.camConfig.get('type', 'PiCamGenerator')
-        module = __import__('piveilance.camera.generators', fromlist=[''])
-        genClass = getattr(module, genName)
-        style = layoutConfig.get('style', 'flow')
-
-        self.setLayout(FixedLayout if style == 'fixed' else FlowLayout)
-        self.generator = genClass(self.camConfig)
-        self.generator.updateCameras.connect(self.recieveData)
-        self.generator.start()
+        self.repository = Repository(config)
+        self.setLayout(config['configuration']['layout'])
+        self.setGenerator(config['configuration']['generator'])
+        self.setView(config['configuration']['view'])
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
@@ -39,67 +28,86 @@ class LayoutManager(QObject):
 
     @pyqtSlot(object, name="data")
     def recieveData(self, data, triggerRedraw=False):
-
-        if (not self.camIds
-                or time.time() - self.start > self.refresh):
-
+        if (not self.camIds or time.time() - self.start > self.generator.listRefresh):
             newCams = list(data.keys())
             if newCams and not compareIter(newCams, self.camIds):
                 triggerRedraw = True
-
             self.camIds = newCams
             self.start = time.time()
             random.shuffle(self.camIds)
-
             if triggerRedraw:
                 self.arrange(True)
 
     def arrange(self, triggerRedraw=False):
-        preCols = WindowGeometry.cols
-        self.camIds = self.camIds or []
-        self.updateWindowGeometry()
+        if not self.camIds:
+            return
 
-        if triggerRedraw or WindowGeometry.cols != preCols:
+        preCols = self.layout.geometry.cols
+        self.updateGeometry()
+
+        if triggerRedraw or self.layout.geometry.cols != preCols:
             c = {n: self.generator.createCamera(n) for n in self.camIds}
-
-            self.camObj = self.layout.buildLayout(c)
+            self.camObj = self.layout.build(c)
             self.clearLayout()
 
             for n, c in self.camObj.items():
-                if c.position and c.name in self.camIds:
-                    self.grid.addWidget(c, *c.position)
-                    self.grid.addWidget(c.label, *c.position)
-                    self.setCamOptions.connect(c.setOptions)
+                self.grid.addWidget(c, *c.position)
+                self.grid.addWidget(c.label, *c.position)
+                self.setCamOptions.connect(c.setOptions)
 
-            if self.layout == FixedLayout:
-                for p in WindowGeometry.free:
-                    d = PlaceholderCamera(str(p), self.camConfig)
-                    d.position = p
-                    self.grid.addWidget(d, *d.position)
-                    self.grid.addWidget(d.label, *d.position)
-                    self.setCamOptions.connect(d.setOptions)
+        camOpts = self.view.getCamGlobals()
+        camOpts['size'] = self.layout.geometry.frameSize
+        self.setGlobalCamOptions(camOpts)
 
+    def setMaxCams(self, max):
+        self.layout.maxAllowed = max
+        self.arrange(True)
 
-        self.setCamOptions.emit(self.camConfig)
+    def setGlobalCamOptions(self, options):
+        self.setCamOptions.emit(options)
+
+    def setTargetCamOptions(self, id, options):
+        try:
+            self.camObj['id'].setOptions(options)
+        except KeyError:
+            raise ValueError("Camera " + id + " does not exist")
 
     def clearLayout(self):
         for i in reversed(range(self.grid.count())):
             self.grid.takeAt(i).widget().deleteLater()
 
-    def setLayout(self, layout):
-        self.layout = layout
-        self.layout.config = self.layoutConfig
+    def setLayout(self, layoutId):
+        self.layout = self.repository.getLayout(layoutId)
+        self.arrange(True)
+
+    def setStretchMode(self, toggle):
+        self.view.stretch = toggle
+        self.arrange()
+
+    def setLabelMode(self, toggle):
+        self.view.labels = toggle
+        self.arrange()
+
+    def setLabelCoordMode(self, toggle):
+        self.view.showCoords = toggle
+        self.arrange()
+
+    def setView(self, viewId):
+        self.view = self.repository.getView(viewId)
+
+    def setGenerator(self, generatorId):
+        self.generator = self.repository.getGenerator(generatorId)
+        self.generator.updateCameras.connect(self.recieveData)
+        self.generator.start()
 
     def setContentMargin(self, margins):
-        m = margins if not self.camConfig.get_bool('stretch') else (0, 0, 0, 0)
+        m = (0, 0, 0, 0) if self.view.stretch else margins
         self.grid.setContentsMargins(*m)
 
-    def updateWindowGeometry(self):
-        n = self.maxCams if self.maxCams else len(self.camIds)
-        w = self.widget.frameGeometry().width()
-        h = self.widget.frameGeometry().height()
-        WindowGeometry.update(width=w, height=h, numCams=n)
-        WindowGeometry.update(**self.layout.calculate(w, h, n))
-        WindowGeometry.calculateAllProperties()
-        self.camConfig['size'] = WindowGeometry.frameSize
-        self.setContentMargin(WindowGeometry.margins)
+    def updateGeometry(self):
+        self.layout.updateGeometry(
+            self.widget.frameGeometry().width(),
+            self.widget.frameGeometry().height(),
+            len(self.camIds)
+        )
+        self.setContentMargin(self.layout.geometry.margins)

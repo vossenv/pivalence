@@ -1,0 +1,63 @@
+
+configuration:
+  layout: default
+  generator: default
+  view: default
+
+views:
+  - id: default
+    fullscreen: false
+    stretch: false
+    fontRatio: 0.045
+    labels: true
+    showCoords: true
+
+cameras:
+  - id: default
+    type: PiCam
+    cropRatio: 0.2
+    direction: right
+
+  - id: living_room
+    type: PiCam
+    name: "Living Room"
+    cropRatio: 0.8
+    direction: hcenter
+
+  - id: garage
+    type: PiCam
+    name: "Garage"
+    cropRatio: 0.8
+    direction: hcenter
+
+layouts:
+  - id: default
+    type: FlowLayout
+    maxAllowed: 0
+  - id: fixed
+    type: FixedLayout
+    cols: 4
+    rows: 4
+    maxAllowed: 0
+    cameras:
+      - id: living_room
+        position: (0,0)
+      - id: garage
+        position: (0,2)
+      - id: fake
+        position: (0,1)
+  - id: simple
+    type: FlowLayout
+    maxAllowed: 0
+    cameras:
+      - id: living_room
+        order: 1
+      - id: garage
+        order: 2
+
+generators:
+  - id: default
+    type: PiCamGenerator
+    dataUrl: http://192.168.50.139:9001/cameras/next
+    updateInterval: .1
+    listRefresh: 10

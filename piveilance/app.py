@@ -8,9 +8,9 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
 
-from piveilance import layout
 from piveilance._version import __version__
-from piveilance.config import *
+from piveilance.config import ConfigLoader
+
 from piveilance.layoutManager import LayoutManager
 from piveilance.resources import get_resource
 
@@ -26,14 +26,6 @@ def cli():
               help="point to config ini by name",
               type=click.Path(exists=True),
               default=None, )
-@click.option('-f', '--fullscreen',
-              help="toggle fullscreen",
-              is_flag=True,
-              default=None)
-@click.option('-s', '--stretch',
-              help="toggle stretch",
-              is_flag=True,
-              default=None)
 def start(ctx, **kwargs):
     app = QApplication(sys.argv)
     _ = PiWndow(ctx, **kwargs)
@@ -51,37 +43,21 @@ class PiWndow(QMainWindow):
         stylesheet = get_resource("styles.qss")
         icon = get_resource("icon.ico")
 
-        cliArgs, configFile = self.parseCLIArgs(cli_options)
-        self.config = Config.from_yaml(configFile).merge(cliArgs)
-        self.camConfig = self.config.get_config('cameras')
-        self.viewConfig = self.config.get_config('view')
-        self.layoutConfig = self.config.get_config('layout')
-
-        self.initWindow(stylesheet, title, icon)
-        self.layoutManager = LayoutManager(self.widget, self.grid, self.camConfig, self.layoutConfig)
-        self.resized.connect(self.layoutManager.resizeEventHandler)
-        self.showFullScreen() if self.fullscreen else self.show()
-
-    def parseCLIArgs(self, cli_options):
-
-        configFile = cli_options.get('config') or "config.yaml"
+        configFile = cli_options.get('config') or "default_config.yaml"
         if not exists(configFile):
             shutil.copy(get_resource(configFile), ".")
 
-        cli = {}
-        for o in cli_options:
-            v = cli_options[o]
-            if not v:
-                continue
-            elif v and o in ['fullscreen']:
-                Config.merge_dict(cli, Config.make_dict(['view', o], v))
-            elif v and o in ['stretch']:
-                Config.merge_dict(cli, Config.make_dict(['cameras', o], v))
-
-        return cli, configFile
+        self.globalConfig = ConfigLoader(configFile).loadGlobalConfig()
+        self.initWindow(stylesheet, title, icon)
+        self.layoutManager = LayoutManager(self.widget, self.grid, self.globalConfig)
+        self.resized.connect(self.layoutManager.resizeEventHandler)
+        self.updateStatusBar()
+        if self.layoutManager.view.fullscreen:
+            self.showFullScreen()
+        else:
+            self.showNormal()
 
     def initWindow(self, stylesheet, title, icon):
-        self.fullscreen = self.viewConfig.get_bool('fullscreen', False)
         self.widget = QWidget()
         self.resize(1024, 768)
         qr = self.frameGeometry()
@@ -90,12 +66,19 @@ class PiWndow(QMainWindow):
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(icon))
         self.setCentralWidget(self.widget)
-        self.statusBar().showMessage('Version: ' + __version__)
         self.grid = QGridLayout()
         self.grid.setSpacing(0)
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
+
+    def updateStatusBar(self, message=""):
+        text = "Version: {0} | Layout: {1} | View: {2}"
+        self.statusBar().showMessage(text.format(
+            __version__,
+            self.layoutManager.layout.id,
+            self.layoutManager.view.id
+        ))
 
     def resizeEvent(self, event):
         """
@@ -113,21 +96,17 @@ class PiWndow(QMainWindow):
         :return:
         """
 
-
         cmenu = QMenu(self)
         quitAct = cmenu.addAction("Quit")
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
-        labelAct = cmenu.addAction("Toggle labels")
-
+        coordAct = cmenu.addAction("Show/Hide coordinates")
+        labelAct = cmenu.addAction("Show/Hide labels")
         layoutMenu = cmenu.addMenu("Layout")
-        flowAct = layoutMenu.addAction("Flow")
-        fixedAct = layoutMenu.addAction("Fixed")
-
-
         maxMenu = cmenu.addMenu("Max Cams")
+
         entries = []
-        if self.layoutManager.layout == layout.FlowLayout:
+        if self.layoutManager.layout.adjustNumberAllowed:
             entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
         entries.append("Unlimited")
         for e in entries:
@@ -135,15 +114,13 @@ class PiWndow(QMainWindow):
             a.name = "limit"
             a.value = e
 
-        cropMenu = cmenu.addMenu("Crop ratio")
-        entries = [float(i / 10) for i in range(0, 11)]
+        entries = self.layoutManager.repository.getAllLayoutIds()
         for e in entries:
-            a = cropMenu.addAction(str(e))
-            a.name = "crop"
+            a = layoutMenu.addAction(str(e))
+            a.name = "layout"
             a.value = e
 
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
-
         if action == quitAct:
             qApp.quit()
         elif action == fullScreenAct:
@@ -151,31 +128,23 @@ class PiWndow(QMainWindow):
                 self.showNormal()
             else:
                 self.showFullScreen()
-
-        elif action == flowAct and self.layoutManager.layout != layout.FlowLayout:
-            self.layoutManager.setLayout(layout.FlowLayout)
-            self.layoutManager.arrange(triggerRedraw=True)
-        elif action == fixedAct and self.layoutManager.layout != layout.FixedLayout:
-            self.layoutManager.setLayout(layout.FixedLayout)
-            self.layoutManager.arrange(triggerRedraw=True)
-
         elif action == stretchAct:
-            current = self.camConfig.get_bool('stretch', False)
-            self.camConfig['stretch'] = not current
-            self.layoutManager.arrange()
+            current = self.layoutManager.view.stretch
+            self.layoutManager.setStretchMode(not current)
         elif action == labelAct:
-            current = self.camConfig.get_bool('labels', True)
-            self.camConfig['labels'] = not current
-            self.layoutManager.arrange()
-
+            current = self.layoutManager.view.labels
+            self.layoutManager.setLabelMode(not current)
+        elif action == coordAct:
+            current = self.layoutManager.view.showCoords
+            self.layoutManager.setLabelCoordMode(not current)
         elif hasattr(action, 'name'):
-            if action.name == "crop":
-                self.camConfig['crop_ratio'] = action.value
-                self.layoutManager.arrange()
-            elif action.name == "limit":
+            if action.name == "limit":
                 v = action.value
-                self.layoutManager.maxCams = 0 if v == "Unlimited" else v
-                self.layoutManager.arrange(triggerRedraw=True)
+                self.layoutManager.setMaxCams(0 if v == "Unlimited" else v)
+            elif action.name == "layout":
+                self.layoutManager.setLayout(action.value)
+                self.updateStatusBar()
+
 
 
 if __name__ == '__main__':
