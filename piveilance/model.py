@@ -30,10 +30,14 @@ class Layout:
         self.cameras = {v['id']: v for v in parse_type(cameras, list)}
         self.geometry = WindowGeometry(self.rows, self.cols)
 
+        for c in self.cameras.values():
+            c['position'] = parse_type(c.get('position'), tuple)
+            c['order'] = parse_type(c.get('order'), int)
+
     def calculate(self):
         pass
 
-    def build(self, camList, geometry, *args):
+    def build(self, camMap):
         pass
 
     def updateGeometry(self, width, height, camLimit):
@@ -41,12 +45,6 @@ class Layout:
         self.geometry.width = width
         self.geometry.height = height
         self.calculate()
-
-    def setCamLayoutFields(self, camList):
-        for c in camList.values():
-            if c.id in self.cameras:
-                c.order = self.cameras[c.id].get('order')
-                c.position = self.cameras[c.id].get('position')
 
 
 class FlowLayout(Layout):
@@ -79,123 +77,59 @@ class FlowLayout(Layout):
         g.frameSize = frameSize
         g.calculateAllProperties()
 
-    def build(self, camList, *args):
+    def build(self, camMap):
 
-        self.setCamLayoutFields(camList)
-        cams = sorted(camList.values(), key=lambda x: x.order or len(camList) + 1)
+        cams = camMap.values()
+
+        for c in cams:
+            if c.id in self.cameras:
+                c.order = self.cameras[c.id].get('order')
+
+        cams = sorted(cams, key=lambda x: x.order or len(cams) + 1)
         cams = cams[0: self.maxAllowed]
-        # cams = [PlaceholderCamera(id=c.id,name=c.name) for c in cams]
 
         for i, c in enumerate(cams):
             c.position = self.geometry.grid[i]
         return {c.id: c for c in cams}
 
 
-# class FixedLayoutStyle(LayoutStyle):
-#     adjustNumberAllowed = False
-#
-#     def calculate(self, geometry):
-#
-#         """
-#         # Rows and cols are predefined from the config
-#
-#         """
-#         geometry.frameSize = geometry.width / geometry.cols
-#         return geometry
-#
-#     # @classmethod
-#     # def filterCameraPositions(self, camList):
-#     #     positions = self.config.get_dict('positions', {})
-#     #     return {k: v for k, v in positions.items() if k in camList}
-#
-#     # @classmethod
-#     # def buildLayout2(self, camList, geometry, getPlaceholder):
-#     #
-#     #     #  pos = self.convertCoordinates(self.filterCameraPositions(camList))
-#     #
-#     #     pos = self.convertCoordinates(self.config.get_dict('positions', {}))
-#     #     rev = {v: k for k, v in pos.items()}
-#     #     free = [c for c in geometry.grid if c not in pos.values()]
-#     #     free.extend([k for k in rev if rev[k] not in camList.keys()])
-#     #
-#     #     for n, c in camList.items():
-#     #         p = pos.get(c.name)
-#     #         if p in geometry.grid:
-#     #             c.position = p
-#     #         elif free:
-#     #             p = free.pop(0)
-#     #             c.position = p if p in geometry.grid else None
-#     #
-#     #     geometry.free = free
-#     #
-#     #     for p in geometry.free:
-#     #         d = getPlaceholder(str(p))
-#     #         d.position = p
-#     #         camList[d.name] = d
-#     #
-#     #     return camList
-#
-#     def buildLayout(self, camList, geometry, ):
-#
-#         if not camList:
-#             return {}
-#
-#         newList = {}
-#
-#         z = getPlaceholder('no')
-#
-#         fixedCoords = self.config.get_dict('positions', {})
-#
-#         x = {parse_collection(v): k for k, v in fixedCoords.items()}
-#
-#         for c in geometry.grid:
-#             print()
-#
-#         # remainingCoords = set(WindowGeometry.grid.copy())
-#         #
-#         # fixedCoords = self.convertCoordinates(self.config.get_dict('positions', {}))
-#         # for name, pos in fixedCoords.items():
-#         #     if pos not in WindowGeometry.grid:
-#         #         print("Warning: specified position {0} for {1} lies outside the grid".format(pos, name))
-#         #     if name in camList.keys():
-#         #         newList[name] = camList.pop(name)
-#         #         newList[name].position = pos
-#         #     else:
-#         #         newList[name] = getPlaceholder(name, pos)
-#         #     remainingCoords.remove(pos)
-#
-#         # try:
-#         #     for name in camList.copy():
-#         #         newList[name] = camList.pop(name)
-#         #         newList[name].position = remainingCoords.pop()
-#         # except Exception as e:
-#         #     print("Remaining cameras could not be added - no space left in grid! " + str(camList.keys))
-#         # try:
-#         #     keys = camList.keys()
-#         #     for p in remainingCoords:
-#         #         cam = camList.pop()
-#         #         newList[str(p)] = getPlaceholder(str(p), p)
-#         # except Exception as e:
-#         #    print()
-#
-#         return newList
+class FixedLayout(Layout):
+    adjustNumberAllowed = False
 
-# @classmethod
-# def parseTuple(self, strTuple):
-#     return
-#
-# @classmethod
-# def convertCoordinates(self, pos):
-#
-#     """
-#     # Convert literal string coordinates to tuple
-#
-#     """
-#     pos = pos.copy()
-#     cc = lambda c: (c[0] - 1, c[1] - 1)
-#     pos.update({k: Parser.parse_collection(v) for k, v in pos.items()})
-#     pos.update({k: cc(v) for k, v in pos.items()})
-#     return pos
+    def __init__(self, *args, **kwargs):
+        super(FixedLayout, self).__init__(*args, **kwargs)
+        self.adjustNumberAllowed = False
+
+    def calculate(self):
+        """
+        # Rows and cols are predefined from the config
+
+        """
+        self.geometry.frameSize = self.geometry.width / self.geometry.cols
+        self.geometry.calculateAllProperties()
+
+    def build(self, camMap):
+
+        positioned = {}
+        freeCams = {c for c in camMap.values() if c.id not in self.cameras}
+        camsByPosition = {c.get('position'): c for c in self.cameras.values()}
+
+        for pos in self.geometry.grid:
+            if pos in camsByPosition:
+                camId = camsByPosition[pos]['id']
+                cam = camMap.get(camId)
+                if not cam:
+                    cam = PlaceholderCamera(id=camId)
+            else:
+                if freeCams:
+                    cam = freeCams.pop()
+                    camId = cam.id
+                else:
+                    camId = "undefined-{}".format(pos)
+                    cam = PlaceholderCamera(id=camId, name="Offline")
+            cam.position = pos
+            positioned[camId] = cam
+        return positioned
 
 
 class View():
@@ -261,7 +195,10 @@ class Camera(QLabel):
 
     def setLabel(self):
         # fit text if too big
-        self.label.setText(self.name if self.show_labels else "")
+        text = self.name if self.show_labels else ""
+        if self.position:
+            text = str(self.position) + " " + text
+        self.label.setText(text)
         self.label.setFont(QFont("Arial", self.font_ratio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setStyleSheet("color: #05FF00;"

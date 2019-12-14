@@ -96,7 +96,7 @@ class LayoutManager(QObject):
         self.generator.start()
 
     def setContentMargin(self, margins):
-        m = margins if not self.view.stretch else (0, 0, 0, 0)
+        m = (0, 0, 0, 0) if self.view.stretch else margins
         self.grid.setContentsMargins(*m)
 
     def updateGeometry(self):

@@ -1,4 +1,5 @@
 import shutil
+import sys
 from os.path import exists
 
 import click
@@ -8,7 +9,8 @@ from PyQt5.QtWidgets import *
 from click_default_group import DefaultGroup
 
 from piveilance._version import __version__
-from piveilance.config import *
+from piveilance.config import ConfigLoader
+
 from piveilance.layoutManager import LayoutManager
 from piveilance.resources import get_resource
 

@@ -56,6 +56,8 @@ def parse_type(value, as_type):
     try:
         if as_type == bool:
             return parse_bool(value)
+        elif as_type == tuple:
+            return parse_tuple(value)
         elif as_type == list:
             return parse_list(value)
         elif as_type == dict:
@@ -67,10 +69,17 @@ def parse_type(value, as_type):
         elif as_type in ["json", "yaml"]:
             return parse_yaml_json(value)
         else:
+            if value is None:
+                return
             return as_type(value)
     except:
         raise TypeError("Error parsing '{0}' as type '{1}'".format(value, as_type))
 
+def parse_tuple(value):
+    if value is None:
+        return
+    value = "(" + value.replace("(","").replace(")","") + ")"
+    return ast.literal_eval(value)
 
 def parse_datetime(date):
     if isinstance(date, datetime):
