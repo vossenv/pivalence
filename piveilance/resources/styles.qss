@@ -15,7 +15,6 @@
     qproperty-alignment: AlignCenter;
 }
 
-
 .QStatusBar {
     background: black;
     color: #34eb52;

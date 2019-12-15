@@ -101,6 +101,7 @@ class PiWndow(QMainWindow):
         fullScreenAct = cmenu.addAction("Toggle fullscreen")
         stretchAct = cmenu.addAction("Toggle stretch")
         coordAct = cmenu.addAction("Show/Hide coordinates")
+        fixedAct = cmenu.addAction("Show/Hide fix state")
         labelAct = cmenu.addAction("Show/Hide labels")
         layoutMenu = cmenu.addMenu("Layout")
 
@@ -139,6 +140,9 @@ class PiWndow(QMainWindow):
         elif action == coordAct:
             current = self.layoutManager.view.showCoords
             self.layoutManager.setLabelCoordMode(not current)
+        elif action == fixedAct:
+            current = self.layoutManager.view.showFixed
+            self.layoutManager.setLabelFixedMode(not current)
         elif hasattr(action, 'name'):
             if action.name == "limit":
                 v = action.value

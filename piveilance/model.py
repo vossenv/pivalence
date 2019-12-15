@@ -135,6 +135,11 @@ class FixedLayout(Layout):
                     cam = PlaceholderCamera(id=camId, name="Offline")
             cam.position = pos
             positioned[camId] = cam
+
+            for i,c in positioned.items():
+                if c.id in self.cameraMap and c.position in self.geometry.grid:
+                    c.isFixed = True
+
         return positioned
 
 
@@ -188,21 +193,27 @@ class View():
                  fullscreen,
                  stretch,
                  fontRatio,
-                 labels,
-                 showCoords):
+                 showLabels,
+                 showCoords,
+                 showFixed,
+                 labelColor):
         self.id = parse_type(id, str)
         self.fullscreen = parse_type(fullscreen, bool)
         self.stretch = parse_type(stretch, bool)
         self.fontRatio = parse_type(fontRatio, float)
-        self.labels = parse_type(labels, bool)
+        self.showLabels = parse_type(showLabels, bool)
         self.showCoords = parse_type(showCoords, bool)
+        self.showFixed = parse_type(showFixed, bool)
+        self.labelColor = parse_type(labelColor, str)
 
     def getCamGlobals(self):
         return {
             'stretch': self.stretch,
             'fontRatio': self.fontRatio,
-            'showLabels': self.labels,
+            'showLabels': self.showLabels,
             'showCoords': self.showCoords,
+            'showFixed': self.showFixed,
+            'labelColor': self.labelColor,
         }
 
 
@@ -218,6 +229,7 @@ class Camera(QLabel):
         self.pixmap = None
         self.id = options['id']
         self.movie = None
+        self.isFixed = False
 
         self.cropRatio = options.get_float('cropRatio', 0)
         if self.cropRatio < 0 or self.cropRatio > 1:
@@ -229,6 +241,8 @@ class Camera(QLabel):
         self.size = options.get_int('size', 50)
         self.showLabels = options.get_bool('showLabels', False)
         self.showCoords = options.get_bool('showCoords', True)
+        self.showFixed = options.get_bool('showFixed', True)
+        self.labelColor = options.get_string('labelColor', '#05FF00')
         self.fontRatio = options.get_float('fontRatio', 0.025)
         self.direction = options.get_string('direction', 'right')
         self.stretch = options.get_bool('stretch', False)
@@ -249,12 +263,16 @@ class Camera(QLabel):
     def setLabel(self):
         # fit text if too big
         text = self.name if self.showLabels else ""
-        if self.position and self.showCoords:
-            text = str(self.position) + " " + text
+        pre = ""
+        if self.showCoords:
+            pre = str(self.position)
+        if self.isFixed and self.showFixed:
+            pre += "F"
+        text = pre + " " + text
         self.label.setText(text)
         self.label.setFont(QFont("Arial", self.fontRatio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.label.setStyleSheet("color: #05FF00; font-weight: bold")
+        self.label.setStyleSheet("color: {}; font-weight: bold".format(self.labelColor))
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):

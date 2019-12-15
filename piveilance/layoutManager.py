@@ -107,6 +107,10 @@ class LayoutManager(QObject):
         self.view.showCoords = toggle
         self.arrange()
 
+    def setLabelFixedMode(self, toggle):
+        self.view.showFixed = toggle
+        self.arrange()
+
     def setView(self, viewId):
         self.view = self.repository.getView(viewId)
 

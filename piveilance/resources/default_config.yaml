@@ -19,15 +19,19 @@ views:
     fullscreen: false
     stretch: false
     fontRatio: 0.045
-    labels: true
+    showLabels: true
     showCoords: true
+    showFixed: true
+    labelColor: '#05FF00'
 
   - id: pi
-    fullscreen: true
+    fullscreen: false
     stretch: false
     fontRatio: 0.045
-    labels: true
+    showLabels: true
     showCoords: true
+    showFixed: true
+    labelColor: '#05FF00'
 
 cameras:
   - id: default
