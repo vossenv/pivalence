@@ -80,10 +80,11 @@ class PiWndow(QMainWindow):
         self.widget.setLayout(self.grid)
         self.setStyleSheet(open(stylesheet, "r").read())
 
-    def updateStatusBar(self, message=""):
-        text = "Version: {0} | Layout: {1} | View: {2}"
+    def updateStatusBar(self):
+        text = "Version: {0} | Configuration: {1} | Layout: {2} | View: {3}"
         self.statusBar().showMessage(text.format(
             __version__,
+            self.layoutManager.globcalConfig.id,
             self.layoutManager.layout.id,
             self.layoutManager.view.id
         ))
