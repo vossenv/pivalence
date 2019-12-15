@@ -31,6 +31,7 @@ class Layout:
         self.maxAllowed = max(parse_type(maxAllowed, int), 0)
         self.cameras = {v['id']: v for v in parse_type(cameras, list)}
         self.geometry = WindowGeometry(self.rows, self.cols)
+        self.totalCams = self.maxAllowed
 
         for c in self.cameras.values():
             c['position'] = parse_type(c.get('position'), tuple)
@@ -109,17 +110,21 @@ class FixedLayout(Layout):
         self.geometry.frameSize = self.geometry.width / self.geometry.cols
         self.geometry.calculateAllProperties()
 
-
     def adjustCols(self, totalCams):
         self.maxAllowed = totalCams
-        extras = totalCams - self.cols*self.rows
+        extras = totalCams - self.cols * self.rows
         if extras > 0 and self.allowExpand:
-            newCols = math.ceil(extras/self.rows)
+            newCols = math.ceil(extras / self.rows)
             self.geometry.cols = self.cols + newCols
             self.calculate()
-        elif self.geometry.cols > self.cols and extras <= 0:
-            self.geometry.cols = self.cols
-            self.calculate()
+        else:
+            self.reset()
+
+    def reset(self):
+        self.geometry.rows = self.rows
+        self.geometry.cols = self.cols
+        self.geometry.frameSize = self.geometry.width / self.geometry.cols
+        self.geometry.calculateAllProperties()
 
     def build(self, camMap):
 
@@ -127,8 +132,8 @@ class FixedLayout(Layout):
         freeCams = {c for c in camMap.values() if c.id not in self.cameras}
         camsByPosition = {c.get('position'): c for c in self.cameras.values()}
 
-        all = set(camMap.keys()) | set(self.cameras.keys())
-        self.adjustCols(len(all))
+        self.totalCams = len(set(camMap.keys()) | set(self.cameras.keys()))
+        self.adjustCols(self.totalCams)
 
         for p, c in camsByPosition.items():
             if p not in self.geometry.grid:
@@ -154,19 +159,19 @@ class FixedLayout(Layout):
             positioned[camId] = cam
         return positioned
 
+
 class FlowFixedLayout(FixedLayout):
 
     def __init__(self, *args, **kwargs):
         super(FlowFixedLayout, self).__init__(*args, **kwargs)
         self.adjustNumberAllowed = True
-
-    # def adjustCols(self, totalCams):
-    #     self.maxAllowed = totalCams
+        self.allowExpand = False
 
     def calculate(self):
         l = FlowLayout(maxAllowed=self.maxAllowed)
         l.geometry = self.geometry
         l.calculate()
+
 
 class View():
 

@@ -37,7 +37,7 @@ layouts:
     maxAllowed: 0
 
   - id: fixed
-    type: FixedLayout
+    type: FlowFixedLayout
     cols: 5
     rows: 2
     allowExpand: true
@@ -65,8 +65,8 @@ layouts:
 
   - id: test_fixed
     type: FixedLayout
-    cols: 2
-    rows: 5
+    cols: 5
+    rows: 2
     allowExpand: true
     cameras:
       - id: front_top
