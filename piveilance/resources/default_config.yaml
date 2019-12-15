@@ -1,13 +1,29 @@
 
-configuration:
-  layout: fixed
-  generator: default
-  view: default
-  placeholder: offline.gif
+globalConfig: pi
+
+configurations:
+  - id: default
+    layout: default
+    generator: default
+    view: default
+    placeholder: offline.gif
+
+  - id: pi
+    layout: pi-fixed
+    generator: default
+    view: pi
+    placeholder: offline.gif
 
 views:
   - id: default
     fullscreen: false
+    stretch: false
+    fontRatio: 0.045
+    labels: true
+    showCoords: true
+
+  - id: pi
+    fullscreen: true
     stretch: false
     fontRatio: 0.045
     labels: true
@@ -36,11 +52,19 @@ layouts:
     type: FlowLayout
     maxAllowed: 0
 
-  - id: fixed
+  - id: simple
+    type: FlowLayout
+    maxAllowed: 0
+    cameras:
+      - id: living_room
+        order: 1
+      - id: garage
+        order: 2
+
+  - id: pi-fixed
     type: FlowFixedLayout
     cols: 5
     rows: 2
-    allowExpand: true
     cameras:
       - id: front_top
         position: (0,0)
@@ -62,32 +86,6 @@ layouts:
         position: (1,4)
       - id: squirrelcam
         position: (1,3)
-
-  - id: test_fixed
-    type: FixedLayout
-    cols: 5
-    rows: 2
-    allowExpand: true
-    cameras:
-      - id: front_top
-        position: (0,0)
-      - id: front_bottom
-        position: (1,0)
-      - id: catpod
-        position: (1,1)
-      - id: living_room
-        position: (0,1)
-      - id: fisheyepi
-        position: (0,4)
-
-  - id: simple
-    type: FlowLayout
-    maxAllowed: 0
-    cameras:
-      - id: living_room
-        order: 1
-      - id: garage
-        order: 2
 
 generators:
   - id: default

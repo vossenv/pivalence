@@ -1,7 +1,7 @@
 import piveilance.generators
 import piveilance.generators
 
-from piveilance.model import View
+from piveilance.model import View, GlobalConfig
 
 
 class Repository():
@@ -9,11 +9,16 @@ class Repository():
     def __init__(self, objectData):
         self.objectData = objectData
 
+    def getConfiguration(self, configId):
+        gconfig = self.objectData['configurations'].get(configId)
+        if not gconfig:
+            raise ValueError("No configuration found for id: '{}'".format(configId))
+        return GlobalConfig(**gconfig)
+
     def getLayout(self, layoutId):
         newLayout = self.objectData['layouts'].get(layoutId)
         if not newLayout:
             raise ValueError("No layout found for id: '{}'".format(layoutId))
-
         _class = getattr(piveilance.model, newLayout['type'])
         return _class(**newLayout)
 

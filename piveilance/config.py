@@ -128,7 +128,8 @@ class ConfigLoader:
     def loadGlobalConfig(self):
 
         globalConfig = Config({})
-        globalConfig['configuration'] = self.config.get_dict('configuration')
+        globalConfig['id'] = self.config.get('globalConfig', 'default')
+        globalConfig['configurations'] = self.get_iter_as_dict('configurations', 'id', required=True)
         globalConfig['cameras'] = self.get_iter_as_dict('cameras', 'id', required=True)
         globalConfig['generators'] = self.get_iter_as_dict('generators', 'id', required=True)
         globalConfig['views'] = self.get_iter_as_dict('views', 'id', required=True)

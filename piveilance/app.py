@@ -103,16 +103,16 @@ class PiWndow(QMainWindow):
         coordAct = cmenu.addAction("Show/Hide coordinates")
         labelAct = cmenu.addAction("Show/Hide labels")
         layoutMenu = cmenu.addMenu("Layout")
-        maxMenu = cmenu.addMenu("Max Cams")
 
-        entries = []
         if self.layoutManager.layout.adjustNumberAllowed:
+            entries = []
+            maxMenu = cmenu.addMenu("Max Cams")
             entries.extend([i for i in range(1, 1 + len(self.layoutManager.camIds))])
-        entries.append("Unlimited")
-        for e in entries:
-            a = maxMenu.addAction(str(e))
-            a.name = "limit"
-            a.value = e
+            entries.append("Unlimited")
+            for e in entries:
+                a = maxMenu.addAction(str(e))
+                a.name = "limit"
+                a.value = e
 
         entries = self.layoutManager.repository.getAllLayoutIds()
         for e in entries:

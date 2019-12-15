@@ -21,10 +21,11 @@ class LayoutManager(QObject):
         self.widget = widget
         self.grid = grid
         self.repository = Repository(config)
-        self.setLayout(config['configuration']['layout'])
-        self.setGenerator(config['configuration']['generator'])
-        self.setView(config['configuration']['view'])
-        self.setPlaceholderImage(config['configuration'].get('placeholder'))
+        self.globcalConfig = self.repository.getConfiguration(config['id'])
+        self.setLayout(self.globcalConfig.layout)
+        self.setGenerator(self.globcalConfig.generator)
+        self.setView(self.globcalConfig.view)
+        self.setPlaceholderImage(self.globcalConfig.placeholder)
 
     @pyqtSlot(name="resize")
     def resizeEventHandler(self, triggerRedraw=False):
@@ -122,6 +123,6 @@ class LayoutManager(QObject):
         self.layout.updateGeometry(
             self.widget.frameGeometry().width(),
             self.widget.frameGeometry().height(),
-            len(self.camIds)
+            self.camIds
         )
         self.setContentMargin(self.layout.geometry.margins)

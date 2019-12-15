@@ -21,19 +21,16 @@ class Layout:
                  cols=3,
                  rows=3,
                  maxAllowed=0,
-                 cameras=None,
-                 allowExpand=False):
+                 cameras=None):
         self.id = parse_type(id, str)
         self.type = parse_type(type, str)
         self.cols = parse_type(cols, int)
         self.rows = parse_type(rows, int)
-        self.allowExpand = parse_type(allowExpand, bool)
         self.maxAllowed = max(parse_type(maxAllowed, int), 0)
-        self.cameras = {v['id']: v for v in parse_type(cameras, list)}
         self.geometry = WindowGeometry(self.rows, self.cols)
-        self.totalCams = self.maxAllowed
+        self.cameraMap = {v['id']: v for v in parse_type(cameras, list)}
 
-        for c in self.cameras.values():
+        for c in self.cameraMap.values():
             c['position'] = parse_type(c.get('position'), tuple)
             c['order'] = parse_type(c.get('order'), int)
 
@@ -43,8 +40,8 @@ class Layout:
     def build(self, camMap):
         pass
 
-    def updateGeometry(self, width, height, camLimit):
-        self.maxAllowed = self.maxAllowed or camLimit
+    def updateGeometry(self, width, height, camIds):
+        self.maxAllowed = self.maxAllowed or len(camIds)
         self.geometry.width = width
         self.geometry.height = height
         self.calculate()
@@ -70,7 +67,7 @@ class FlowLayout(Layout):
             frameSize = g.width / cols
             if ((g.height - frameSize * rows) < frameSize
                     and (rows * cols - self.maxAllowed) <= 1
-                    or (rows > cols and cols > 2)):
+                    or (rows > cols and cols > 3)):
                 break
             cols -= 1
         cols = 1 if cols < 1 else cols
@@ -85,8 +82,8 @@ class FlowLayout(Layout):
         cams = camMap.values()
 
         for c in cams:
-            if c.id in self.cameras:
-                c.order = self.cameras[c.id].get('order')
+            if c.id in self.cameraMap:
+                c.order = self.cameraMap[c.id].get('order')
 
         cams = sorted(cams, key=lambda x: x.order or len(cams) + 1)
         cams = cams[0: self.maxAllowed]
@@ -110,30 +107,11 @@ class FixedLayout(Layout):
         self.geometry.frameSize = self.geometry.width / self.geometry.cols
         self.geometry.calculateAllProperties()
 
-    def adjustCols(self, totalCams):
-        self.maxAllowed = totalCams
-        extras = totalCams - self.cols * self.rows
-        if extras > 0 and self.allowExpand:
-            newCols = math.ceil(extras / self.rows)
-            self.geometry.cols = self.cols + newCols
-            self.calculate()
-        else:
-            self.reset()
-
-    def reset(self):
-        self.geometry.rows = self.rows
-        self.geometry.cols = self.cols
-        self.geometry.frameSize = self.geometry.width / self.geometry.cols
-        self.geometry.calculateAllProperties()
-
     def build(self, camMap):
 
         positioned = {}
-        freeCams = {c for c in camMap.values() if c.id not in self.cameras}
-        camsByPosition = {c.get('position'): c for c in self.cameras.values()}
-
-        self.totalCams = len(set(camMap.keys()) | set(self.cameras.keys()))
-        self.adjustCols(self.totalCams)
+        freeCams = {c for c in camMap.values() if c.id not in self.cameraMap}
+        camsByPosition = {c.get('position'): c for c in self.cameraMap.values()}
 
         for p, c in camsByPosition.items():
             if p not in self.geometry.grid:
@@ -164,13 +142,43 @@ class FlowFixedLayout(FixedLayout):
 
     def __init__(self, *args, **kwargs):
         super(FlowFixedLayout, self).__init__(*args, **kwargs)
-        self.adjustNumberAllowed = True
-        self.allowExpand = False
+        self.adjustNumberAllowed = False
 
-    def calculate(self):
-        l = FlowLayout(maxAllowed=self.maxAllowed)
+    def updateGeometry(self, width, height, camIds):
+
+        totalCams = len(set(camIds) | set(self.cameraMap.keys()))
+        gridsize = self.cols * self.rows
+        self.maxAllowed = max(totalCams, gridsize)
+        self.geometry.width = width
+        self.geometry.height = height
+
+        if totalCams <= gridsize:
+            self.geometry.rows = self.rows
+            self.geometry.cols = self.cols
+            self.style = FixedLayout
+        else:
+            self.style = FlowLayout
+        self.calculate()
+
+    def calculate(self, type=FlowLayout):
+        l = self.style(maxAllowed=self.maxAllowed)
         l.geometry = self.geometry
         l.calculate()
+
+
+class GlobalConfig():
+
+    def __init__(self,
+                 id="default",
+                 layout="default",
+                 generator="default",
+                 view="default",
+                 placeholder="offline.gif"):
+        self.id = parse_type(id, str)
+        self.layout = parse_type(layout, str)
+        self.generator = parse_type(generator, str)
+        self.view = parse_type(view, str)
+        self.placeholder = parse_type(placeholder, str)
 
 
 class View():
