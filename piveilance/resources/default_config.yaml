@@ -1,5 +1,5 @@
 
-globalConfig: pi
+globalConfig: default
 
 configurations:
   - id: default
@@ -25,7 +25,7 @@ views:
     labelColor: '#05FF00'
 
   - id: pi
-    fullscreen: false
+    fullscreen: true
     stretch: false
     fontRatio: 0.045
     showLabels: true

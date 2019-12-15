@@ -4,7 +4,7 @@ import time
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 
-from piveilance.model import PlaceholderCamera
+from piveilance.components import PlaceholderCamera
 from piveilance.repository import Repository
 from piveilance.resources import get_image
 from piveilance.util import compareIter

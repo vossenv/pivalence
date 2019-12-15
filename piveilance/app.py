@@ -21,9 +21,13 @@ def cli():
 
 @cli.command()
 @click.pass_context
-@click.option('-c', '--config',
+@click.option('-f', '--file',
               help="point to config ini by name",
               type=click.Path(exists=True),
+              default=None, )
+@click.option('-c', '--config',
+              help="specify config id",
+              type=str,
               default=None, )
 def start(ctx, **kwargs):
     app = QApplication(sys.argv)
@@ -42,11 +46,15 @@ class PiWndow(QMainWindow):
         stylesheet = get_resource("styles.qss")
         icon = get_image("icon.ico")
 
-        configFile = cli_options.get('config') or "config.yaml"
+        configFile = cli_options.get('file') or "config.yaml"
+        useConfig = cli_options.get('config')
+
         if not exists(configFile):
             shutil.copy(get_resource("default_config.yaml"), "config.yaml")
 
         self.globalConfig = ConfigLoader(configFile).loadGlobalConfig()
+        if useConfig:
+            self.globalConfig['id'] = useConfig
         self.initWindow(stylesheet, title, icon)
         self.layoutManager = LayoutManager(self.widget, self.grid, self.globalConfig)
         self.resized.connect(self.layoutManager.resizeEventHandler)
