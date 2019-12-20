@@ -94,6 +94,7 @@ layouts:
 generators:
   - id: default
     type: PiCamGenerator
-    dataUrl: http://192.168.50.139:9001/cameras/next
+    #dataUrl: http://192.168.50.139:9001/cameras/next
+    dataUrl: http://lakebodom.net/piveilance/cameras/next
     updateInterval: .1
     listRefresh: 10
