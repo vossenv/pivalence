@@ -5,6 +5,8 @@ import re
 import sys
 from collections import UserDict, Mapping
 from copy import deepcopy
+from os import makedirs
+from os.path import realpath
 
 import yaml
 
@@ -171,9 +173,11 @@ yaml.add_representer(str, FormattedDumper.str_presenter)
 
 
 class Logging:
+    level = 20
 
-    @staticmethod
-    def init_logger(logging_config, logs_root):
+    @classmethod
+    def init_logger(cls, logging_config, level=logging.INFO):
+        cls.level = logging.getLevelName(level)
         with open(logging_config) as cfg:
             config = yaml.safe_load(cfg)
 
@@ -182,22 +186,20 @@ class Logging:
             filename = h.get('filename')
             if filename:
                 filename = correct_path(filename)
-                if not filename == os.path.abspath(filename):
-                    filename = os.path.join(logs_root, filename)
                 h['filename'] = filename
                 log_dir = os.path.dirname(filename)
-                if not os.path.exists(log_dir):
-                    os.makedirs(log_dir)
-                log_dirs[k] = log_dir
-            logging.config.dictConfig(config)
+                makedirs(log_dir, exist_ok=True)
+                log_dirs[k] = realpath(log_dir)
+        logging.config.dictConfig(config)
         return log_dirs
 
-    @staticmethod
-    def get_logger(name='main'):
+    @classmethod
+    def get_logger(cls, name='main'):
         current = logging.getLoggerClass()
         logging.setLoggerClass(PiLogger)
         custom = logging.getLogger(name)
         logging.setLoggerClass(current)
+        custom.setLevel(cls.level)
         return custom
 
 

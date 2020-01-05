@@ -8,7 +8,7 @@ from piveilance.components import PlaceholderCamera
 from piveilance.repository import Repository
 from piveilance.resources import get_image
 from piveilance.util import compareIter
-
+from piveilance.config import Logging
 
 class LayoutManager(QObject):
     setCamOptions = pyqtSignal(object)
@@ -20,8 +20,13 @@ class LayoutManager(QObject):
         self.start = time.time()
         self.widget = widget
         self.grid = grid
+        self.logger = Logging.get_logger('layout_manager')
+        self.logger.info("Initializing with configuration: " + config['id'])
+
+        self.logger.debug("Creating repository from YAML")
         self.repository = Repository(config)
         self.globcalConfig = self.repository.getConfiguration(config['id'])
+        self.logger.debug("Loading global configuration")
         self.setLayout(self.globcalConfig.layout)
         self.setGenerator(self.globcalConfig.generator)
         self.setView(self.globcalConfig.view)

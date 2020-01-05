@@ -16,3 +16,4 @@ dist/
 .pytest_cache/
 .eggs/
 *egg-info*
+*.log

@@ -1,4 +1,5 @@
 disable_existing_loggers: false
+version: 1
 formatters:
     standard:
         datefmt: '%Y-%m-%d %H:%M:%S'
@@ -10,68 +11,20 @@ handlers:
         level: DEBUG
     process:
         level: DEBUG
-        class: logging.handlers.TimedRotatingFileHandler
+        class: logging.handlers.RotatingFileHandler
         formatter: standard
-        filename: process.log
-        when: midnight
-        backupCount: 10
-    server:
-        level: DEBUG
-        class: logging.handlers.TimedRotatingFileHandler
-        formatter: standard
-        filename: server.log
-        when: midnight
-        backupCount: 10
-    error:
-        level: WARNING
-        class: logging.handlers.TimedRotatingFileHandler
-        formatter: standard
-        filename: error.log
-        when: midnight
+        filename: ../logs/process.log
+        maxBytes: 1000000
         backupCount: 10
 loggers:
     "":
         handlers:
             - console
-            - error
             - process
         level: DEBUG
         propagate: true
-    "werkzeug":
-        handlers:
-            - server
-        level: WARNING
-        propagate: true
-
-    "botocore":
-        handlers:
-            - process
-            - error
-        level: WARNING
-        propagate: true
-
-    "s3transfer":
-        handlers:
-            - process
-            - console
-            - error
-        level: INFO
-        propagate: true
-
     "urllib3":
         handlers:
-            - process
             - console
-            - error
-        level: INFO
-        propagate: true
-
-    "boto3":
-        handlers:
             - process
-            - console
-            - error
-        level: INFO
-        propagate: true
-
-version: 1
+        level: WARN

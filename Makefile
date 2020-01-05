@@ -25,7 +25,8 @@ upload:
 	twine upload dist/*.tar.gz dist/*.whl
 
 deploy:
-	C:\cygwin64\bin\ssh.exe kloud@192.168.50.60 'bash -s' < ./install-microservice.sh
+	#C:\cygwin64\bin\ssh.exe kloud@192.168.50.60 'bash -s' < ./install-microservice.sh
+	C:\cygwin64\bin\ssh.exe carag@192.168.50.7 'bash -s' < ./install-microservice.sh
 
 all:
 	make build

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-dir="/home/kloud/.piveilance"
+
 name="piveilance"
+user="carag"
+dir="/home/${user}/.piveilance"
 
 echo ""
 echo "Initiating install with the parameters:"
@@ -16,7 +18,7 @@ sudo tee /etc/systemd/system/$name.service <<-EOF > /dev/null
 [Unit]
 Description=$name Service
 [Service]
-User=kloud
+User=$user
 WorkingDirectory=$dir
 ExecStart=/bin/bash $dir/startup.sh
 SuccessExitStatus=143
@@ -29,8 +31,8 @@ sudo tee $dir/startup.sh <<-EOF > /dev/null
 #!/usr/bin/env bash
 #sleep 10
 export DISPLAY=:0
-source venv/bin/activate
-pip install --upgrade piveilance
+source venv/bin/activate && \
+pip install --upgrade piveilance && \
 piveilance
 EOF
 
