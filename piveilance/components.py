@@ -284,7 +284,7 @@ class Camera(QLabel):
         self.label.setText(text)
         self.label.setFont(QFont("Arial", self.fontRatio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.label.setStyleSheet("color: {}; font-weight: bold".format(self.labelColor))
+        self.label.setStyleSheet("color: {}; font-weight: normal".format(self.labelColor))
 
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
