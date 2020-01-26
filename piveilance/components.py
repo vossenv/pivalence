@@ -301,6 +301,8 @@ class PiCamera(Camera):
             self.ip = camData[self.id].get("ip") or ""
             self.setLabel()
             data = self.getImage(camData[self.id]['image'])
+            if len(data) < 50:
+                return  # Else we get null pixmap
             img = QImage()
             img.loadFromData(data)
             if self.cropRatio != 0:
