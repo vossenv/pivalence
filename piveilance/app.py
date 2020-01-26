@@ -165,7 +165,7 @@ class PiWndow(QMainWindow):
             current = self.layoutManager.view.stretch
             self.layoutManager.setStretchMode(not current)
         elif action == labelAct:
-            current = self.layoutManager.view.labels
+            current = self.layoutManager.view.showLabels
             self.layoutManager.setLabelMode(not current)
         elif action == coordAct:
             current = self.layoutManager.view.showCoords

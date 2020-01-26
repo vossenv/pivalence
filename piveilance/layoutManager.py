@@ -105,7 +105,7 @@ class LayoutManager(QObject):
         self.arrange()
 
     def setLabelMode(self, toggle):
-        self.view.labels = toggle
+        self.view.showLabels = toggle
         self.arrange()
 
     def setLabelCoordMode(self, toggle):
