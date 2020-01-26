@@ -1,5 +1,7 @@
 import shutil
 import sys
+import socket
+
 from os.path import exists
 
 import click
@@ -100,15 +102,26 @@ class PiWndow(QMainWindow):
         self.setStyleSheet(open(stylesheet, "r").read())
 
     def updateStatusBar(self):
-        text = "Version: {0} | Configuration: {1} | Layout: {2} | View: {3}"
+        text = "Version: {0} | Configuration: {1} | Layout: {2} | View: {3} | Address: {4}"
         text = text.format(
             __version__,
             self.layoutManager.globcalConfig.id,
             self.layoutManager.layout.id,
-            self.layoutManager.view.id
+            self.layoutManager.view.id,
+            self.getIp()
         )
         self.logger.debug("Updating status: " + text)
         self.statusBar().showMessage(text)
+
+    def getIp(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('10.255.255.255', 1))
+            ip = s.getsockname()[0]
+        except:
+            ip = '127.0.0.1'
+        s.close()
+        return str(ip)
 
     def resizeEvent(self, event):
         """
