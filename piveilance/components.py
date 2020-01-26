@@ -231,6 +231,7 @@ class Camera(QLabel):
         self.label = QLabel()
         self.pixmap = None
         self.id = options['id']
+        self.ip = "unknown"
         self.movie = None
         self.isFixed = False
 
@@ -272,6 +273,14 @@ class Camera(QLabel):
         if self.isFixed and self.showFixed:
             pre += "F"
         text = pre + " " + text
+        if self.showLabels:
+            address = self.ip.split(".")
+            if len(address) == 1:
+                label_ip =  self.ip[:5]
+            else:
+                label_ip = "." + address[-1]
+            text += " " + label_ip
+
         self.label.setText(text)
         self.label.setFont(QFont("Arial", self.fontRatio * self.size))
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
@@ -289,6 +298,8 @@ class PiCamera(Camera):
     @pyqtSlot(object, name="setimage")
     def setImage(self, camData=None):
         if self.id in camData:
+            self.ip = camData[self.id].get("ip") or ""
+            self.setLabel()
             data = self.getImage(camData[self.id]['image'])
             img = QImage()
             img.loadFromData(data)
