@@ -306,7 +306,7 @@ class PiCamera(Camera):
             img = QImage()
             img.loadFromData(data)
             if self.cropRatio != 0:
-                crop = max((img.width() - img.height()) * self.cropRatio, 0)
+                crop = img.width()* self.cropRatio
                 img = ImageManip.crop_direction(img, crop, self.direction)
 
             time.sleep(0.005 * random.randint(0, 1))
